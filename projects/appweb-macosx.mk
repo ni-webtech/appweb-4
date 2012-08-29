@@ -23,7 +23,6 @@ all: prep \
         $(CONFIG)/bin/libpcre.dylib \
         $(CONFIG)/bin/libhttp.dylib \
         $(CONFIG)/bin/http \
-        $(CONFIG)/bin/authpass \
         $(CONFIG)/bin/libsqlite3.dylib \
         $(CONFIG)/bin/sqlite \
         $(CONFIG)/bin/libappweb.dylib \
@@ -34,6 +33,7 @@ all: prep \
         $(CONFIG)/bin/esp-appweb.conf \
         $(CONFIG)/bin/mod_cgi.dylib \
         $(CONFIG)/bin/mod_ssl.dylib \
+        $(CONFIG)/bin/authpass \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
         $(CONFIG)/bin/appweb \
@@ -61,7 +61,6 @@ clean:
 	rm -rf $(CONFIG)/bin/libpcre.dylib
 	rm -rf $(CONFIG)/bin/libhttp.dylib
 	rm -rf $(CONFIG)/bin/http
-	rm -rf $(CONFIG)/bin/authpass
 	rm -rf $(CONFIG)/bin/libsqlite3.dylib
 	rm -rf $(CONFIG)/bin/sqlite
 	rm -rf $(CONFIG)/bin/libappweb.dylib
@@ -72,6 +71,7 @@ clean:
 	rm -rf $(CONFIG)/bin/esp-appweb.conf
 	rm -rf $(CONFIG)/bin/mod_cgi.dylib
 	rm -rf $(CONFIG)/bin/mod_ssl.dylib
+	rm -rf $(CONFIG)/bin/authpass
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
 	rm -rf $(CONFIG)/bin/appweb
@@ -87,7 +87,6 @@ clean:
 	rm -rf $(CONFIG)/obj/pcre.o
 	rm -rf $(CONFIG)/obj/httpLib.o
 	rm -rf $(CONFIG)/obj/http.o
-	rm -rf $(CONFIG)/obj/authpass.o
 	rm -rf $(CONFIG)/obj/sqlite3.o
 	rm -rf $(CONFIG)/obj/sqlite.o
 	rm -rf $(CONFIG)/obj/config.o
@@ -111,6 +110,7 @@ clean:
 	rm -rf $(CONFIG)/obj/phpHandler.o
 	rm -rf $(CONFIG)/obj/proxyHandler.o
 	rm -rf $(CONFIG)/obj/sslModule.o
+	rm -rf $(CONFIG)/obj/authpass.o
 	rm -rf $(CONFIG)/obj/cgiProgram.o
 	rm -rf $(CONFIG)/obj/setConfig.o
 	rm -rf $(CONFIG)/obj/appweb.o
@@ -214,6 +214,32 @@ $(CONFIG)/bin/http:  \
         $(CONFIG)/obj/http.o
 	$(CC) -o $(CONFIG)/bin/http -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/http.o $(LIBS) -lhttp -lpam -lmpr -lpcre
 
+$(CONFIG)/inc/sqlite3.h: 
+	rm -fr $(CONFIG)/inc/sqlite3.h
+	cp -r src/deps/sqlite/sqlite3.h $(CONFIG)/inc/sqlite3.h
+
+$(CONFIG)/obj/sqlite3.o: \
+        src/deps/sqlite/sqlite3.c \
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/sqlite3.h
+	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -arch x86_64 -Wno-deprecated-declarations -g -Wno-unused-result -w -w $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
+
+$(CONFIG)/bin/libsqlite3.dylib:  \
+        $(CONFIG)/inc/sqlite3.h \
+        $(CONFIG)/obj/sqlite3.o
+	$(CC) -dynamiclib -o $(CONFIG)/bin/libsqlite3.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/libsqlite3.dylib $(CONFIG)/obj/sqlite3.o $(LIBS)
+
+$(CONFIG)/obj/sqlite.o: \
+        src/deps/sqlite/sqlite.c \
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/sqlite3.h
+	$(CC) -c -o $(CONFIG)/obj/sqlite.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
+
+$(CONFIG)/bin/sqlite:  \
+        $(CONFIG)/bin/libsqlite3.dylib \
+        $(CONFIG)/obj/sqlite.o
+	$(CC) -o $(CONFIG)/bin/sqlite -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/sqlite.o $(LIBS) -lsqlite3
+
 $(CONFIG)/inc/appweb.h: 
 	rm -fr $(CONFIG)/inc/appweb.h
 	cp -r src/appweb.h $(CONFIG)/inc/appweb.h
@@ -270,43 +296,6 @@ $(CONFIG)/bin/libappweb.dylib:  \
         $(CONFIG)/obj/log.o \
         $(CONFIG)/obj/server.o
 	$(CC) -dynamiclib -o $(CONFIG)/bin/libappweb.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/libappweb.dylib $(CONFIG)/obj/config.o $(CONFIG)/obj/convenience.o $(CONFIG)/obj/dirHandler.o $(CONFIG)/obj/fileHandler.o $(CONFIG)/obj/log.o $(CONFIG)/obj/server.o $(LIBS) -lhttp -lpam -lmpr -lpcre
-
-$(CONFIG)/obj/authpass.o: \
-        src/utils/authpass.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/appweb.h
-	$(CC) -c -o $(CONFIG)/obj/authpass.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/authpass.c
-
-$(CONFIG)/bin/authpass:  \
-        $(CONFIG)/bin/libappweb.dylib \
-        $(CONFIG)/obj/authpass.o
-	$(CC) -o $(CONFIG)/bin/authpass -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/authpass.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre
-
-$(CONFIG)/inc/sqlite3.h: 
-	rm -fr $(CONFIG)/inc/sqlite3.h
-	cp -r src/deps/sqlite/sqlite3.h $(CONFIG)/inc/sqlite3.h
-
-$(CONFIG)/obj/sqlite3.o: \
-        src/deps/sqlite/sqlite3.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/sqlite3.h
-	$(CC) -c -o $(CONFIG)/obj/sqlite3.o -arch x86_64 -Wno-deprecated-declarations -g -Wno-unused-result -w -w $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite3.c
-
-$(CONFIG)/bin/libsqlite3.dylib:  \
-        $(CONFIG)/inc/sqlite3.h \
-        $(CONFIG)/obj/sqlite3.o
-	$(CC) -dynamiclib -o $(CONFIG)/bin/libsqlite3.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/libsqlite3.dylib $(CONFIG)/obj/sqlite3.o $(LIBS)
-
-$(CONFIG)/obj/sqlite.o: \
-        src/deps/sqlite/sqlite.c \
-        $(CONFIG)/inc/bit.h \
-        $(CONFIG)/inc/sqlite3.h
-	$(CC) -c -o $(CONFIG)/obj/sqlite.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/deps/sqlite/sqlite.c
-
-$(CONFIG)/bin/sqlite:  \
-        $(CONFIG)/bin/libsqlite3.dylib \
-        $(CONFIG)/obj/sqlite.o
-	$(CC) -o $(CONFIG)/bin/sqlite -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/sqlite.o $(LIBS) -lsqlite3
 
 $(CONFIG)/inc/edi.h: 
 	rm -fr $(CONFIG)/inc/edi.h
@@ -456,6 +445,17 @@ $(CONFIG)/bin/mod_ssl.dylib:  \
         $(CONFIG)/bin/libappweb.dylib \
         $(CONFIG)/obj/sslModule.o
 	$(CC) -dynamiclib -o $(CONFIG)/bin/mod_ssl.dylib -arch x86_64 $(LDFLAGS) -compatibility_version 4.1.0 -current_version 4.1.0 -compatibility_version 4.1.0 -current_version 4.1.0 $(LIBPATHS) -install_name @rpath/mod_ssl.dylib $(CONFIG)/obj/sslModule.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre
+
+$(CONFIG)/obj/authpass.o: \
+        src/utils/authpass.c \
+        $(CONFIG)/inc/bit.h \
+        $(CONFIG)/inc/appweb.h
+	$(CC) -c -o $(CONFIG)/obj/authpass.o -arch x86_64 $(CFLAGS) $(DFLAGS) -I$(CONFIG)/inc src/utils/authpass.c
+
+$(CONFIG)/bin/authpass:  \
+        $(CONFIG)/bin/libappweb.dylib \
+        $(CONFIG)/obj/authpass.o
+	$(CC) -o $(CONFIG)/bin/authpass -arch x86_64 $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/authpass.o $(LIBS) -lappweb -lhttp -lpam -lmpr -lpcre
 
 $(CONFIG)/obj/cgiProgram.o: \
         src/utils/cgiProgram.c \

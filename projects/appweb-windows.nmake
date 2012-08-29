@@ -41,7 +41,7 @@ all: prep \
         $(CONFIG)\bin\esp-www \
         $(CONFIG)\bin\esp-appweb.conf \
         $(CONFIG)\bin\mod_cgi.dll \
-        $(CONFIG)\bin\auth.exe \
+        $(CONFIG)\bin\authpass.exe \
         $(CONFIG)\bin\cgiProgram.exe \
         $(CONFIG)\bin\setConfig.exe \
         $(CONFIG)\bin\appweb.exe \
@@ -84,7 +84,7 @@ clean:
 	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
 	-if exist $(CONFIG)\bin\esp-appweb.conf del /Q $(CONFIG)\bin\esp-appweb.conf
 	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
-	-if exist $(CONFIG)\bin\auth.exe del /Q $(CONFIG)\bin\auth.exe
+	-if exist $(CONFIG)\bin\authpass.exe del /Q $(CONFIG)\bin\authpass.exe
 	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
 	-if exist $(CONFIG)\bin\setConfig.exe del /Q $(CONFIG)\bin\setConfig.exe
 	-if exist $(CONFIG)\bin\appweb.exe del /Q $(CONFIG)\bin\appweb.exe
@@ -126,7 +126,7 @@ clean:
 	-if exist $(CONFIG)\obj\phpHandler.obj del /Q $(CONFIG)\obj\phpHandler.obj
 	-if exist $(CONFIG)\obj\proxyHandler.obj del /Q $(CONFIG)\obj\proxyHandler.obj
 	-if exist $(CONFIG)\obj\sslModule.obj del /Q $(CONFIG)\obj\sslModule.obj
-	-if exist $(CONFIG)\obj\auth.obj del /Q $(CONFIG)\obj\auth.obj
+	-if exist $(CONFIG)\obj\authpass.obj del /Q $(CONFIG)\obj\authpass.obj
 	-if exist $(CONFIG)\obj\cgiProgram.obj del /Q $(CONFIG)\obj\cgiProgram.obj
 	-if exist $(CONFIG)\obj\setConfig.obj del /Q $(CONFIG)\obj\setConfig.obj
 	-if exist $(CONFIG)\obj\appweb.obj del /Q $(CONFIG)\obj\appweb.obj
@@ -413,15 +413,15 @@ $(CONFIG)\bin\mod_cgi.dll:  \
         $(CONFIG)\obj\cgiHandler.obj
 	"$(LD)" -dll -out:$(CONFIG)\bin\mod_cgi.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\mod_cgi.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\cgiHandler.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib
 
-$(CONFIG)\obj\auth.obj: \
-        src\utils\auth.c \
+$(CONFIG)\obj\authpass.obj: \
+        src\utils\authpass.c \
         $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\auth.obj -Fd$(CONFIG)\obj\auth.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\utils\auth.c
+	"$(CC)" -c -Fo$(CONFIG)\obj\authpass.obj -Fd$(CONFIG)\obj\authpass.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\utils\authpass.c
 
-$(CONFIG)\bin\auth.exe:  \
-        $(CONFIG)\bin\libmpr.dll \
-        $(CONFIG)\obj\auth.obj
-	"$(LD)" -out:$(CONFIG)\bin\auth.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\auth.obj $(LIBS) libmpr.lib
+$(CONFIG)\bin\authpass.exe:  \
+        $(CONFIG)\bin\libappweb.dll \
+        $(CONFIG)\obj\authpass.obj
+	"$(LD)" -out:$(CONFIG)\bin\authpass.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\authpass.obj $(LIBS) libappweb.lib libhttp.lib libmpr.lib libpcre.lib
 
 $(CONFIG)\obj\cgiProgram.obj: \
         src\utils\cgiProgram.c \

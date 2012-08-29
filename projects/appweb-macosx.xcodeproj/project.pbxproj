@@ -107,17 +107,17 @@
 				004E6C37004F3D0E00000029 /* PBXTargetDependency libpcre */,
 				004E6C37004F3D0E0000002A /* PBXTargetDependency libhttp */,
 				004E6C37004F3D0E0000002B /* PBXTargetDependency http */,
-				004E6C37004F3D0E0000002C /* PBXTargetDependency authpass */,
-				004E6C37004F3D0E0000002D /* PBXTargetDependency libsqlite3 */,
-				004E6C37004F3D0E0000002E /* PBXTargetDependency sqlite */,
-				004E6C37004F3D0E0000002F /* PBXTargetDependency libappweb */,
-				004E6C37004F3D0E00000030 /* PBXTargetDependency mod_esp */,
-				004E6C37004F3D0E00000031 /* PBXTargetDependency esp */,
-				004E6C37004F3D0E00000032 /* PBXTargetDependency esp.conf */,
-				004E6C37004F3D0E00000033 /* PBXTargetDependency esp.www */,
-				004E6C37004F3D0E00000034 /* PBXTargetDependency esp-appweb.conf */,
-				004E6C37004F3D0E00000035 /* PBXTargetDependency mod_cgi */,
-				004E6C37004F3D0E00000036 /* PBXTargetDependency mod_ssl */,
+				004E6C37004F3D0E0000002C /* PBXTargetDependency libsqlite3 */,
+				004E6C37004F3D0E0000002D /* PBXTargetDependency sqlite */,
+				004E6C37004F3D0E0000002E /* PBXTargetDependency libappweb */,
+				004E6C37004F3D0E0000002F /* PBXTargetDependency mod_esp */,
+				004E6C37004F3D0E00000030 /* PBXTargetDependency esp */,
+				004E6C37004F3D0E00000031 /* PBXTargetDependency esp.conf */,
+				004E6C37004F3D0E00000032 /* PBXTargetDependency esp.www */,
+				004E6C37004F3D0E00000033 /* PBXTargetDependency esp-appweb.conf */,
+				004E6C37004F3D0E00000034 /* PBXTargetDependency mod_cgi */,
+				004E6C37004F3D0E00000035 /* PBXTargetDependency mod_ssl */,
+				004E6C37004F3D0E00000036 /* PBXTargetDependency authpass */,
 				004E6C37004F3D0E00000037 /* PBXTargetDependency cgiProgram */,
 				004E6C37004F3D0E00000038 /* PBXTargetDependency setConfig */,
 				004E6C37004F3D0E00000039 /* PBXTargetDependency appweb */,
@@ -151,36 +151,36 @@
 		004E6C37004F3D0E0000004A /* pcre.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000004B /* pcre.c */; };
 		004E6C37004F3D0E0000004C /* httpLib.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000004D /* httpLib.c */; };
 		004E6C37004F3D0E0000004E /* http.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000004F /* http.c */; };
-		004E6C37004F3D0E00000050 /* authpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000051 /* authpass.c */; };
-		004E6C37004F3D0E00000052 /* sqlite3.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000053 /* sqlite3.c */; };
-		004E6C37004F3D0E00000054 /* sqlite.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000055 /* sqlite.c */; };
-		004E6C37004F3D0E00000056 /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000057 /* config.c */; };
-		004E6C37004F3D0E00000058 /* convenience.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000059 /* convenience.c */; };
-		004E6C37004F3D0E0000005A /* dirHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000005B /* dirHandler.c */; };
-		004E6C37004F3D0E0000005C /* fileHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000005D /* fileHandler.c */; };
-		004E6C37004F3D0E0000005E /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000005F /* log.c */; };
-		004E6C37004F3D0E00000060 /* server.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000061 /* server.c */; };
-		004E6C37004F3D0E00000062 /* edi.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000063 /* edi.c */; };
-		004E6C37004F3D0E00000064 /* espAbbrev.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000065 /* espAbbrev.c */; };
-		004E6C37004F3D0E00000066 /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000067 /* espFramework.c */; };
-		004E6C37004F3D0E00000068 /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000069 /* espHandler.c */; };
-		004E6C37004F3D0E0000006A /* espHtml.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006B /* espHtml.c */; };
-		004E6C37004F3D0E0000006C /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006D /* espSession.c */; };
-		004E6C37004F3D0E0000006E /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006F /* espTemplate.c */; };
-		004E6C37004F3D0E00000070 /* mdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000071 /* mdb.c */; };
-		004E6C37004F3D0E00000072 /* sdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000073 /* sdb.c */; };
-		004E6C37004F3D0E00000062 /* edi.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000063 /* edi.c */; };
-		004E6C37004F3D0E00000074 /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000075 /* esp.c */; };
-		004E6C37004F3D0E00000064 /* espAbbrev.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000065 /* espAbbrev.c */; };
-		004E6C37004F3D0E00000066 /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000067 /* espFramework.c */; };
-		004E6C37004F3D0E00000068 /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000069 /* espHandler.c */; };
-		004E6C37004F3D0E0000006A /* espHtml.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006B /* espHtml.c */; };
-		004E6C37004F3D0E0000006C /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006D /* espSession.c */; };
-		004E6C37004F3D0E0000006E /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006F /* espTemplate.c */; };
-		004E6C37004F3D0E00000070 /* mdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000071 /* mdb.c */; };
-		004E6C37004F3D0E00000072 /* sdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000073 /* sdb.c */; };
-		004E6C37004F3D0E00000076 /* cgiHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000077 /* cgiHandler.c */; };
-		004E6C37004F3D0E00000078 /* sslModule.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000079 /* sslModule.c */; };
+		004E6C37004F3D0E00000050 /* sqlite3.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000051 /* sqlite3.c */; };
+		004E6C37004F3D0E00000052 /* sqlite.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000053 /* sqlite.c */; };
+		004E6C37004F3D0E00000054 /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000055 /* config.c */; };
+		004E6C37004F3D0E00000056 /* convenience.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000057 /* convenience.c */; };
+		004E6C37004F3D0E00000058 /* dirHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000059 /* dirHandler.c */; };
+		004E6C37004F3D0E0000005A /* fileHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000005B /* fileHandler.c */; };
+		004E6C37004F3D0E0000005C /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000005D /* log.c */; };
+		004E6C37004F3D0E0000005E /* server.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000005F /* server.c */; };
+		004E6C37004F3D0E00000060 /* edi.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000061 /* edi.c */; };
+		004E6C37004F3D0E00000062 /* espAbbrev.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000063 /* espAbbrev.c */; };
+		004E6C37004F3D0E00000064 /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000065 /* espFramework.c */; };
+		004E6C37004F3D0E00000066 /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000067 /* espHandler.c */; };
+		004E6C37004F3D0E00000068 /* espHtml.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000069 /* espHtml.c */; };
+		004E6C37004F3D0E0000006A /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006B /* espSession.c */; };
+		004E6C37004F3D0E0000006C /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006D /* espTemplate.c */; };
+		004E6C37004F3D0E0000006E /* mdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006F /* mdb.c */; };
+		004E6C37004F3D0E00000070 /* sdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000071 /* sdb.c */; };
+		004E6C37004F3D0E00000060 /* edi.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000061 /* edi.c */; };
+		004E6C37004F3D0E00000072 /* esp.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000073 /* esp.c */; };
+		004E6C37004F3D0E00000062 /* espAbbrev.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000063 /* espAbbrev.c */; };
+		004E6C37004F3D0E00000064 /* espFramework.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000065 /* espFramework.c */; };
+		004E6C37004F3D0E00000066 /* espHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000067 /* espHandler.c */; };
+		004E6C37004F3D0E00000068 /* espHtml.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000069 /* espHtml.c */; };
+		004E6C37004F3D0E0000006A /* espSession.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006B /* espSession.c */; };
+		004E6C37004F3D0E0000006C /* espTemplate.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006D /* espTemplate.c */; };
+		004E6C37004F3D0E0000006E /* mdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000006F /* mdb.c */; };
+		004E6C37004F3D0E00000070 /* sdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000071 /* sdb.c */; };
+		004E6C37004F3D0E00000074 /* cgiHandler.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000075 /* cgiHandler.c */; };
+		004E6C37004F3D0E00000076 /* sslModule.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000077 /* sslModule.c */; };
+		004E6C37004F3D0E00000078 /* authpass.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000079 /* authpass.c */; };
 		004E6C37004F3D0E0000007A /* cgiProgram.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000007B /* cgiProgram.c */; };
 		004E6C37004F3D0E0000007C /* setConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000007D /* setConfig.c */; };
 		004E6C37004F3D0E0000007E /* appweb.c in Sources */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000007F /* appweb.c */; };
@@ -194,36 +194,36 @@
 		004E6C37004F3D0E0000008B /* libhttp.dylib for http */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
 		004E6C37004F3D0E0000008D /* libmpr.dylib for http */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
 		004E6C37004F3D0E0000008E /* libpcre.dylib for http */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
-		004E6C37004F3D0E0000008F /* libappweb.dylib for authpass */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000090; };
-		004E6C37004F3D0E00000091 /* libhttp.dylib for authpass */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
-		004E6C37004F3D0E00000092 /* libmpr.dylib for authpass */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
-		004E6C37004F3D0E00000093 /* libpcre.dylib for authpass */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
-		004E6C37004F3D0E00000094 /* libsqlite3.dylib for sqlite */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000095; };
-		004E6C37004F3D0E00000096 /* libhttp.dylib for libappweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
-		004E6C37004F3D0E00000097 /* libmpr.dylib for libappweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
-		004E6C37004F3D0E00000098 /* libpcre.dylib for libappweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
-		004E6C37004F3D0E00000099 /* libappweb.dylib for mod_esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000090; };
-		004E6C37004F3D0E0000009A /* libhttp.dylib for mod_esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
-		004E6C37004F3D0E0000009B /* libmpr.dylib for mod_esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
-		004E6C37004F3D0E0000009C /* libpcre.dylib for mod_esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
-		004E6C37004F3D0E0000009D /* libappweb.dylib for esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000090; };
-		004E6C37004F3D0E0000009E /* libhttp.dylib for esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
-		004E6C37004F3D0E0000009F /* libmpr.dylib for esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
-		004E6C37004F3D0E000000A0 /* libpcre.dylib for esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
-		004E6C37004F3D0E000000A1 /* libappweb.dylib for mod_cgi */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000090; };
-		004E6C37004F3D0E000000A2 /* libhttp.dylib for mod_cgi */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
-		004E6C37004F3D0E000000A3 /* libmpr.dylib for mod_cgi */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
-		004E6C37004F3D0E000000A4 /* libpcre.dylib for mod_cgi */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
-		004E6C37004F3D0E000000A5 /* libappweb.dylib for mod_ssl */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000090; };
-		004E6C37004F3D0E000000A6 /* libhttp.dylib for mod_ssl */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
-		004E6C37004F3D0E000000A7 /* libmpr.dylib for mod_ssl */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
-		004E6C37004F3D0E000000A8 /* libpcre.dylib for mod_ssl */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
+		004E6C37004F3D0E0000008F /* libsqlite3.dylib for sqlite */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000090; };
+		004E6C37004F3D0E00000091 /* libhttp.dylib for libappweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
+		004E6C37004F3D0E00000092 /* libmpr.dylib for libappweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
+		004E6C37004F3D0E00000093 /* libpcre.dylib for libappweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
+		004E6C37004F3D0E00000094 /* libappweb.dylib for mod_esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000095; };
+		004E6C37004F3D0E00000096 /* libhttp.dylib for mod_esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
+		004E6C37004F3D0E00000097 /* libmpr.dylib for mod_esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
+		004E6C37004F3D0E00000098 /* libpcre.dylib for mod_esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
+		004E6C37004F3D0E00000099 /* libappweb.dylib for esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000095; };
+		004E6C37004F3D0E0000009A /* libhttp.dylib for esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
+		004E6C37004F3D0E0000009B /* libmpr.dylib for esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
+		004E6C37004F3D0E0000009C /* libpcre.dylib for esp */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
+		004E6C37004F3D0E0000009D /* libappweb.dylib for mod_cgi */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000095; };
+		004E6C37004F3D0E0000009E /* libhttp.dylib for mod_cgi */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
+		004E6C37004F3D0E0000009F /* libmpr.dylib for mod_cgi */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
+		004E6C37004F3D0E000000A0 /* libpcre.dylib for mod_cgi */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
+		004E6C37004F3D0E000000A1 /* libappweb.dylib for mod_ssl */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000095; };
+		004E6C37004F3D0E000000A2 /* libhttp.dylib for mod_ssl */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
+		004E6C37004F3D0E000000A3 /* libmpr.dylib for mod_ssl */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
+		004E6C37004F3D0E000000A4 /* libpcre.dylib for mod_ssl */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
+		004E6C37004F3D0E000000A5 /* libappweb.dylib for authpass */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000095; };
+		004E6C37004F3D0E000000A6 /* libhttp.dylib for authpass */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
+		004E6C37004F3D0E000000A7 /* libmpr.dylib for authpass */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
+		004E6C37004F3D0E000000A8 /* libpcre.dylib for authpass */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
 		004E6C37004F3D0E000000A9 /* libmpr.dylib for setConfig */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
-		004E6C37004F3D0E000000AA /* libappweb.dylib for appweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000090; };
+		004E6C37004F3D0E000000AA /* libappweb.dylib for appweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000095; };
 		004E6C37004F3D0E000000AB /* libhttp.dylib for appweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
 		004E6C37004F3D0E000000AC /* libmpr.dylib for appweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
 		004E6C37004F3D0E000000AD /* libpcre.dylib for appweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
-		004E6C37004F3D0E000000AE /* libappweb.dylib for testAppweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000090; };
+		004E6C37004F3D0E000000AE /* libappweb.dylib for testAppweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000095; };
 		004E6C37004F3D0E000000AF /* libhttp.dylib for testAppweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008C; };
 		004E6C37004F3D0E000000B0 /* libmpr.dylib for testAppweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E00000085; };
 		004E6C37004F3D0E000000B1 /* libpcre.dylib for testAppweb */ = {isa = PBXBuildFile; fileRef = 004E6C37004F3D0E0000008A; };
@@ -321,126 +321,126 @@
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000C2 /* PBXContainerItemProxy libappweb from authpass */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C3;
-			remoteInfo = libappweb;
-		};
-		004E6C37004F3D0E000000C4 /* PBXContainerItemProxy Prep from authpass */ = {
+		004E6C37004F3D0E000000C2 /* PBXContainerItemProxy Prep from libsqlite3 */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000C5 /* PBXContainerItemProxy Prep from libsqlite3 */ = {
+		004E6C37004F3D0E000000C3 /* PBXContainerItemProxy libsqlite3 from sqlite */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E00000040;
-			remoteInfo = Prep;
-		};
-		004E6C37004F3D0E000000C6 /* PBXContainerItemProxy libsqlite3 from sqlite */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C7;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C4;
 			remoteInfo = libsqlite3;
 		};
-		004E6C37004F3D0E000000C8 /* PBXContainerItemProxy Prep from sqlite */ = {
+		004E6C37004F3D0E000000C5 /* PBXContainerItemProxy Prep from sqlite */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000C9 /* PBXContainerItemProxy libhttp from libappweb */ = {
+		004E6C37004F3D0E000000C6 /* PBXContainerItemProxy libhttp from libappweb */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E000000C0;
 			remoteInfo = libhttp;
 		};
-		004E6C37004F3D0E000000CA /* PBXContainerItemProxy Prep from libappweb */ = {
+		004E6C37004F3D0E000000C7 /* PBXContainerItemProxy Prep from libappweb */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000CB /* PBXContainerItemProxy libappweb from mod_esp */ = {
+		004E6C37004F3D0E000000C8 /* PBXContainerItemProxy libappweb from mod_esp */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C3;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C9;
 			remoteInfo = libappweb;
 		};
-		004E6C37004F3D0E000000CC /* PBXContainerItemProxy Prep from mod_esp */ = {
+		004E6C37004F3D0E000000CA /* PBXContainerItemProxy Prep from mod_esp */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000CD /* PBXContainerItemProxy libappweb from esp */ = {
+		004E6C37004F3D0E000000CB /* PBXContainerItemProxy libappweb from esp */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C3;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C9;
 			remoteInfo = libappweb;
 		};
-		004E6C37004F3D0E000000CE /* PBXContainerItemProxy Prep from esp */ = {
+		004E6C37004F3D0E000000CC /* PBXContainerItemProxy Prep from esp */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000CF /* PBXContainerItemProxy Prep from esp.conf */ = {
+		004E6C37004F3D0E000000CD /* PBXContainerItemProxy Prep from esp.conf */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000D0 /* PBXContainerItemProxy Prep from esp.www */ = {
+		004E6C37004F3D0E000000CE /* PBXContainerItemProxy Prep from esp.www */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000D1 /* PBXContainerItemProxy Prep from esp-appweb.conf */ = {
+		004E6C37004F3D0E000000CF /* PBXContainerItemProxy Prep from esp-appweb.conf */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000D2 /* PBXContainerItemProxy libappweb from mod_cgi */ = {
+		004E6C37004F3D0E000000D0 /* PBXContainerItemProxy libappweb from mod_cgi */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C3;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C9;
 			remoteInfo = libappweb;
 		};
-		004E6C37004F3D0E000000D3 /* PBXContainerItemProxy Prep from mod_cgi */ = {
+		004E6C37004F3D0E000000D1 /* PBXContainerItemProxy Prep from mod_cgi */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000040;
 			remoteInfo = Prep;
 		};
-		004E6C37004F3D0E000000D4 /* PBXContainerItemProxy libappweb from mod_ssl */ = {
+		004E6C37004F3D0E000000D2 /* PBXContainerItemProxy libappweb from mod_ssl */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C3;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C9;
 			remoteInfo = libappweb;
 		};
-		004E6C37004F3D0E000000D5 /* PBXContainerItemProxy Prep from mod_ssl */ = {
+		004E6C37004F3D0E000000D3 /* PBXContainerItemProxy Prep from mod_ssl */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 004E6C37004F3D0E00000040;
+			remoteInfo = Prep;
+		};
+		004E6C37004F3D0E000000D4 /* PBXContainerItemProxy libappweb from authpass */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C9;
+			remoteInfo = libappweb;
+		};
+		004E6C37004F3D0E000000D5 /* PBXContainerItemProxy Prep from authpass */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
@@ -472,7 +472,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C3;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C9;
 			remoteInfo = libappweb;
 		};
 		004E6C37004F3D0E000000DA /* PBXContainerItemProxy Prep from appweb */ = {
@@ -486,7 +486,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C3;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C9;
 			remoteInfo = libappweb;
 		};
 		004E6C37004F3D0E000000DC /* PBXContainerItemProxy Prep from testAppweb */ = {
@@ -587,82 +587,82 @@
 			remoteGlobalIDString = 004E6C37004F3D0E000000EE;
 			remoteInfo = http;
 		};
-		004E6C37004F3D0E000000EF /* PBXContainerItemProxy authpass from All */ = {
+		004E6C37004F3D0E000000EF /* PBXContainerItemProxy libsqlite3 from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000F0;
-			remoteInfo = authpass;
-		};
-		004E6C37004F3D0E000000F1 /* PBXContainerItemProxy libsqlite3 from All */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C7;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C4;
 			remoteInfo = libsqlite3;
 		};
-		004E6C37004F3D0E000000F2 /* PBXContainerItemProxy sqlite from All */ = {
+		004E6C37004F3D0E000000F0 /* PBXContainerItemProxy sqlite from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000F3;
+			remoteGlobalIDString = 004E6C37004F3D0E000000F1;
 			remoteInfo = sqlite;
 		};
-		004E6C37004F3D0E000000F4 /* PBXContainerItemProxy libappweb from All */ = {
+		004E6C37004F3D0E000000F2 /* PBXContainerItemProxy libappweb from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000C3;
+			remoteGlobalIDString = 004E6C37004F3D0E000000C9;
 			remoteInfo = libappweb;
 		};
-		004E6C37004F3D0E000000F5 /* PBXContainerItemProxy mod_esp from All */ = {
+		004E6C37004F3D0E000000F3 /* PBXContainerItemProxy mod_esp from All */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 004E6C37004F3D0E000000F4;
+			remoteInfo = mod_esp;
+		};
+		004E6C37004F3D0E000000F5 /* PBXContainerItemProxy esp from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E000000F6;
-			remoteInfo = mod_esp;
-		};
-		004E6C37004F3D0E000000F7 /* PBXContainerItemProxy esp from All */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 004E6C37004F3D0E000000F8;
 			remoteInfo = esp;
 		};
-		004E6C37004F3D0E000000F9 /* PBXContainerItemProxy esp.conf from All */ = {
+		004E6C37004F3D0E000000F7 /* PBXContainerItemProxy esp.conf from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E00000006;
 			remoteInfo = esp.conf;
 		};
-		004E6C37004F3D0E000000FA /* PBXContainerItemProxy esp.www from All */ = {
+		004E6C37004F3D0E000000F8 /* PBXContainerItemProxy esp.www from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E0000000A;
 			remoteInfo = esp.www;
 		};
-		004E6C37004F3D0E000000FB /* PBXContainerItemProxy esp-appweb.conf from All */ = {
+		004E6C37004F3D0E000000F9 /* PBXContainerItemProxy esp-appweb.conf from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E0000000E;
 			remoteInfo = esp-appweb.conf;
 		};
-		004E6C37004F3D0E000000FC /* PBXContainerItemProxy mod_cgi from All */ = {
+		004E6C37004F3D0E000000FA /* PBXContainerItemProxy mod_cgi from All */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 004E6C37004F3D0E000000FB;
+			remoteInfo = mod_cgi;
+		};
+		004E6C37004F3D0E000000FC /* PBXContainerItemProxy mod_ssl from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E000000FD;
-			remoteInfo = mod_cgi;
+			remoteInfo = mod_ssl;
 		};
-		004E6C37004F3D0E000000FE /* PBXContainerItemProxy mod_ssl from All */ = {
+		004E6C37004F3D0E000000FE /* PBXContainerItemProxy authpass from All */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 004E6C37004F3D0E00000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 004E6C37004F3D0E000000FF;
-			remoteInfo = mod_ssl;
+			remoteInfo = authpass;
 		};
 		004E6C37004F3D0E00000100 /* PBXContainerItemProxy cgiProgram from All */ = {
 			isa = PBXContainerItemProxy;
@@ -741,49 +741,49 @@
 		004E6C37004F3D0E0000008C /* libhttp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libhttp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		004E6C37004F3D0E0000004F /* http.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = http.c; path = src/deps/http/http.c; sourceTree = "<group>"; };
 		004E6C37004F3D0E00000112 /* http */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = http; sourceTree = BUILT_PRODUCTS_DIR; };
-		004E6C37004F3D0E00000051 /* authpass.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = authpass.c; path = src/utils/authpass.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000113 /* appweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = appweb.h; path = macosx-x64-xcode/inc/appweb.h; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000114 /* authpass */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = authpass; sourceTree = BUILT_PRODUCTS_DIR; };
-		004E6C37004F3D0E00000053 /* sqlite3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sqlite3.c; path = src/deps/sqlite/sqlite3.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000115 /* sqlite3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sqlite3.h; path = macosx-x64-xcode/inc/sqlite3.h; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000095 /* libsqlite3 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libsqlite3.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		004E6C37004F3D0E00000055 /* sqlite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sqlite.c; path = src/deps/sqlite/sqlite.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000116 /* sqlite */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sqlite; sourceTree = BUILT_PRODUCTS_DIR; };
-		004E6C37004F3D0E00000057 /* config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = config.c; path = src/config.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000059 /* convenience.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = convenience.c; path = src/convenience.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000005B /* dirHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dirHandler.c; path = src/dirHandler.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000005D /* fileHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fileHandler.c; path = src/fileHandler.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000005F /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = src/log.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000061 /* server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = server.c; path = src/server.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000090 /* libappweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libappweb.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		004E6C37004F3D0E00000063 /* edi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edi.c; path = src/esp/edi.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000117 /* edi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = edi.h; path = macosx-x64-xcode/inc/edi.h; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000065 /* espAbbrev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espAbbrev.c; path = src/esp/espAbbrev.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000118 /* esp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = esp.h; path = macosx-x64-xcode/inc/esp.h; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000067 /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = src/esp/espFramework.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000069 /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHandler.c; path = src/esp/espHandler.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000006B /* espHtml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHtml.c; path = src/esp/espHtml.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000006D /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = src/esp/espSession.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000006F /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = src/esp/espTemplate.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000071 /* mdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = src/esp/mdb.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000119 /* mdb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mdb.h; path = macosx-x64-xcode/inc/mdb.h; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000073 /* sdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sdb.c; path = src/esp/sdb.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000011A /* mod_esp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_esp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		004E6C37004F3D0E00000063 /* edi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edi.c; path = src/esp/edi.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000075 /* esp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = esp.c; path = src/esp/esp.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000065 /* espAbbrev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espAbbrev.c; path = src/esp/espAbbrev.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000067 /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = src/esp/espFramework.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000069 /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHandler.c; path = src/esp/espHandler.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000006B /* espHtml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHtml.c; path = src/esp/espHtml.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000006D /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = src/esp/espSession.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000006F /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = src/esp/espTemplate.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000071 /* mdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = src/esp/mdb.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E00000073 /* sdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sdb.c; path = src/esp/sdb.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000011B /* esp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = esp; sourceTree = BUILT_PRODUCTS_DIR; };
-		004E6C37004F3D0E00000077 /* cgiHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cgiHandler.c; path = src/modules/cgiHandler.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000011C /* mod_cgi */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_cgi.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
-		004E6C37004F3D0E00000079 /* sslModule.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sslModule.c; path = src/modules/sslModule.c; sourceTree = "<group>"; };
-		004E6C37004F3D0E0000011D /* mod_ssl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_ssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		004E6C37004F3D0E00000051 /* sqlite3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sqlite3.c; path = src/deps/sqlite/sqlite3.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000113 /* sqlite3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sqlite3.h; path = macosx-x64-xcode/inc/sqlite3.h; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000090 /* libsqlite3 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libsqlite3.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		004E6C37004F3D0E00000053 /* sqlite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sqlite.c; path = src/deps/sqlite/sqlite.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000114 /* sqlite */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = sqlite; sourceTree = BUILT_PRODUCTS_DIR; };
+		004E6C37004F3D0E00000055 /* config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = config.c; path = src/config.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000115 /* appweb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = appweb.h; path = macosx-x64-xcode/inc/appweb.h; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000057 /* convenience.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = convenience.c; path = src/convenience.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000059 /* dirHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = dirHandler.c; path = src/dirHandler.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000005B /* fileHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fileHandler.c; path = src/fileHandler.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000005D /* log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = log.c; path = src/log.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000005F /* server.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = server.c; path = src/server.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000095 /* libappweb */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libappweb.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		004E6C37004F3D0E00000061 /* edi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edi.c; path = src/esp/edi.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000116 /* edi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = edi.h; path = macosx-x64-xcode/inc/edi.h; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000063 /* espAbbrev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espAbbrev.c; path = src/esp/espAbbrev.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000117 /* esp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = esp.h; path = macosx-x64-xcode/inc/esp.h; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000065 /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = src/esp/espFramework.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000067 /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHandler.c; path = src/esp/espHandler.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000069 /* espHtml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHtml.c; path = src/esp/espHtml.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000006B /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = src/esp/espSession.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000006D /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = src/esp/espTemplate.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000006F /* mdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = src/esp/mdb.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000118 /* mdb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mdb.h; path = macosx-x64-xcode/inc/mdb.h; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000071 /* sdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sdb.c; path = src/esp/sdb.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000119 /* mod_esp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_esp.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		004E6C37004F3D0E00000061 /* edi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = edi.c; path = src/esp/edi.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000073 /* esp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = esp.c; path = src/esp/esp.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000063 /* espAbbrev.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espAbbrev.c; path = src/esp/espAbbrev.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000065 /* espFramework.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espFramework.c; path = src/esp/espFramework.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000067 /* espHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHandler.c; path = src/esp/espHandler.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000069 /* espHtml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espHtml.c; path = src/esp/espHtml.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000006B /* espSession.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espSession.c; path = src/esp/espSession.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000006D /* espTemplate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = espTemplate.c; path = src/esp/espTemplate.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000006F /* mdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = src/esp/mdb.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E00000071 /* sdb.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sdb.c; path = src/esp/sdb.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000011A /* esp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = esp; sourceTree = BUILT_PRODUCTS_DIR; };
+		004E6C37004F3D0E00000075 /* cgiHandler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cgiHandler.c; path = src/modules/cgiHandler.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000011B /* mod_cgi */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_cgi.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		004E6C37004F3D0E00000077 /* sslModule.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sslModule.c; path = src/modules/sslModule.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000011C /* mod_ssl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = mod_ssl.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		004E6C37004F3D0E00000079 /* authpass.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = authpass.c; path = src/utils/authpass.c; sourceTree = "<group>"; };
+		004E6C37004F3D0E0000011D /* authpass */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = authpass; sourceTree = BUILT_PRODUCTS_DIR; };
 		004E6C37004F3D0E0000007B /* cgiProgram.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cgiProgram.c; path = src/utils/cgiProgram.c; sourceTree = "<group>"; };
 		004E6C37004F3D0E0000011E /* cgiProgram */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = cgiProgram; sourceTree = BUILT_PRODUCTS_DIR; };
 		004E6C37004F3D0E0000007D /* setConfig.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = setConfig.c; path = src/utils/setConfig.c; sourceTree = "<group>"; };
@@ -856,18 +856,7 @@
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
-		004E6C37004F3D0E0000012A /* Frameworks and Libraries for authpass */ = {
-            isa = PBXFrameworksBuildPhase;
-            buildActionMask = 2147483647;
-            files = (
-				004E6C37004F3D0E0000008F /* libappweb */,
-				004E6C37004F3D0E00000091 /* libhttp */,
-				004E6C37004F3D0E00000092 /* libmpr */,
-				004E6C37004F3D0E00000093 /* libpcre */,				
-            );
-            runOnlyForDeploymentPostprocessing = 0;
-        };
-		004E6C37004F3D0E0000012B /* Frameworks and Libraries for libsqlite3 */ = {
+		004E6C37004F3D0E0000012A /* Frameworks and Libraries for libsqlite3 */ = {
             isa = PBXFrameworksBuildPhase;
             buildActionMask = 2147483647;
             files = (
@@ -875,25 +864,36 @@
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
-		004E6C37004F3D0E0000012C /* Frameworks and Libraries for sqlite */ = {
+		004E6C37004F3D0E0000012B /* Frameworks and Libraries for sqlite */ = {
             isa = PBXFrameworksBuildPhase;
             buildActionMask = 2147483647;
             files = (
-				004E6C37004F3D0E00000094 /* libsqlite3 */,				
+				004E6C37004F3D0E0000008F /* libsqlite3 */,				
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
-		004E6C37004F3D0E0000012D /* Frameworks and Libraries for libappweb */ = {
+		004E6C37004F3D0E0000012C /* Frameworks and Libraries for libappweb */ = {
             isa = PBXFrameworksBuildPhase;
             buildActionMask = 2147483647;
             files = (
+				004E6C37004F3D0E00000091 /* libhttp */,
+				004E6C37004F3D0E00000092 /* libmpr */,
+				004E6C37004F3D0E00000093 /* libpcre */,				
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+		004E6C37004F3D0E0000012D /* Frameworks and Libraries for mod_esp */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+				004E6C37004F3D0E00000094 /* libappweb */,
 				004E6C37004F3D0E00000096 /* libhttp */,
 				004E6C37004F3D0E00000097 /* libmpr */,
 				004E6C37004F3D0E00000098 /* libpcre */,				
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
-		004E6C37004F3D0E0000012E /* Frameworks and Libraries for mod_esp */ = {
+		004E6C37004F3D0E0000012E /* Frameworks and Libraries for esp */ = {
             isa = PBXFrameworksBuildPhase;
             buildActionMask = 2147483647;
             files = (
@@ -904,7 +904,7 @@
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
-		004E6C37004F3D0E0000012F /* Frameworks and Libraries for esp */ = {
+		004E6C37004F3D0E0000012F /* Frameworks and Libraries for mod_cgi */ = {
             isa = PBXFrameworksBuildPhase;
             buildActionMask = 2147483647;
             files = (
@@ -915,7 +915,7 @@
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
-		004E6C37004F3D0E00000130 /* Frameworks and Libraries for mod_cgi */ = {
+		004E6C37004F3D0E00000130 /* Frameworks and Libraries for mod_ssl */ = {
             isa = PBXFrameworksBuildPhase;
             buildActionMask = 2147483647;
             files = (
@@ -926,7 +926,7 @@
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
-		004E6C37004F3D0E00000131 /* Frameworks and Libraries for mod_ssl */ = {
+		004E6C37004F3D0E00000131 /* Frameworks and Libraries for authpass */ = {
             isa = PBXFrameworksBuildPhase;
             buildActionMask = 2147483647;
             files = (
@@ -1082,23 +1082,12 @@
             path = ..;
             sourceTree = SOURCE_ROOT;
         };
-		004E6C37004F3D0E00000141 /* authpass */ = {
-            isa = PBXGroup;
-            children = (
-				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000113 /* appweb.h */,
-				004E6C37004F3D0E00000051 /* authpass.c */,
-			);
-            name = "authpass";
-            path = ..;
-            sourceTree = SOURCE_ROOT;
-        };
 		004E6C37004F3D0E0000013C /* libsqlite3 */ = {
             isa = PBXGroup;
             children = (
 				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000115 /* sqlite3.h */,
-				004E6C37004F3D0E00000053 /* sqlite3.c */,
+				004E6C37004F3D0E00000113 /* sqlite3.h */,
+				004E6C37004F3D0E00000051 /* sqlite3.c */,
 			);
             name = "libsqlite3";
             path = ..;
@@ -1108,8 +1097,8 @@
             isa = PBXGroup;
             children = (
 				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000115 /* sqlite3.h */,
-				004E6C37004F3D0E00000055 /* sqlite.c */,
+				004E6C37004F3D0E00000113 /* sqlite3.h */,
+				004E6C37004F3D0E00000053 /* sqlite.c */,
 			);
             name = "sqlite";
             path = ..;
@@ -1119,14 +1108,14 @@
             isa = PBXGroup;
             children = (
 				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000113 /* appweb.h */,
+				004E6C37004F3D0E00000115 /* appweb.h */,
 				004E6C37004F3D0E00000110 /* pcre.h */,
-				004E6C37004F3D0E00000057 /* config.c */,
-				004E6C37004F3D0E00000059 /* convenience.c */,
-				004E6C37004F3D0E0000005B /* dirHandler.c */,
-				004E6C37004F3D0E0000005D /* fileHandler.c */,
-				004E6C37004F3D0E0000005F /* log.c */,
-				004E6C37004F3D0E00000061 /* server.c */,
+				004E6C37004F3D0E00000055 /* config.c */,
+				004E6C37004F3D0E00000057 /* convenience.c */,
+				004E6C37004F3D0E00000059 /* dirHandler.c */,
+				004E6C37004F3D0E0000005B /* fileHandler.c */,
+				004E6C37004F3D0E0000005D /* log.c */,
+				004E6C37004F3D0E0000005F /* server.c */,
 			);
             name = "libappweb";
             path = ..;
@@ -1136,20 +1125,20 @@
             isa = PBXGroup;
             children = (
 				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000117 /* edi.h */,
+				004E6C37004F3D0E00000116 /* edi.h */,
 				004E6C37004F3D0E00000110 /* pcre.h */,
-				004E6C37004F3D0E00000118 /* esp.h */,
-				004E6C37004F3D0E00000113 /* appweb.h */,
-				004E6C37004F3D0E00000119 /* mdb.h */,
-				004E6C37004F3D0E00000063 /* edi.c */,
-				004E6C37004F3D0E00000065 /* espAbbrev.c */,
-				004E6C37004F3D0E00000067 /* espFramework.c */,
-				004E6C37004F3D0E00000069 /* espHandler.c */,
-				004E6C37004F3D0E0000006B /* espHtml.c */,
-				004E6C37004F3D0E0000006D /* espSession.c */,
-				004E6C37004F3D0E0000006F /* espTemplate.c */,
-				004E6C37004F3D0E00000071 /* mdb.c */,
-				004E6C37004F3D0E00000073 /* sdb.c */,
+				004E6C37004F3D0E00000117 /* esp.h */,
+				004E6C37004F3D0E00000115 /* appweb.h */,
+				004E6C37004F3D0E00000118 /* mdb.h */,
+				004E6C37004F3D0E00000061 /* edi.c */,
+				004E6C37004F3D0E00000063 /* espAbbrev.c */,
+				004E6C37004F3D0E00000065 /* espFramework.c */,
+				004E6C37004F3D0E00000067 /* espHandler.c */,
+				004E6C37004F3D0E00000069 /* espHtml.c */,
+				004E6C37004F3D0E0000006B /* espSession.c */,
+				004E6C37004F3D0E0000006D /* espTemplate.c */,
+				004E6C37004F3D0E0000006F /* mdb.c */,
+				004E6C37004F3D0E00000071 /* sdb.c */,
 			);
             name = "mod_esp";
             path = ..;
@@ -1159,21 +1148,21 @@
             isa = PBXGroup;
             children = (
 				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000117 /* edi.h */,
+				004E6C37004F3D0E00000116 /* edi.h */,
 				004E6C37004F3D0E00000110 /* pcre.h */,
-				004E6C37004F3D0E00000118 /* esp.h */,
-				004E6C37004F3D0E00000113 /* appweb.h */,
-				004E6C37004F3D0E00000119 /* mdb.h */,
-				004E6C37004F3D0E00000063 /* edi.c */,
-				004E6C37004F3D0E00000075 /* esp.c */,
-				004E6C37004F3D0E00000065 /* espAbbrev.c */,
-				004E6C37004F3D0E00000067 /* espFramework.c */,
-				004E6C37004F3D0E00000069 /* espHandler.c */,
-				004E6C37004F3D0E0000006B /* espHtml.c */,
-				004E6C37004F3D0E0000006D /* espSession.c */,
-				004E6C37004F3D0E0000006F /* espTemplate.c */,
-				004E6C37004F3D0E00000071 /* mdb.c */,
-				004E6C37004F3D0E00000073 /* sdb.c */,
+				004E6C37004F3D0E00000117 /* esp.h */,
+				004E6C37004F3D0E00000115 /* appweb.h */,
+				004E6C37004F3D0E00000118 /* mdb.h */,
+				004E6C37004F3D0E00000061 /* edi.c */,
+				004E6C37004F3D0E00000073 /* esp.c */,
+				004E6C37004F3D0E00000063 /* espAbbrev.c */,
+				004E6C37004F3D0E00000065 /* espFramework.c */,
+				004E6C37004F3D0E00000067 /* espHandler.c */,
+				004E6C37004F3D0E00000069 /* espHtml.c */,
+				004E6C37004F3D0E0000006B /* espSession.c */,
+				004E6C37004F3D0E0000006D /* espTemplate.c */,
+				004E6C37004F3D0E0000006F /* mdb.c */,
+				004E6C37004F3D0E00000071 /* sdb.c */,
 			);
             name = "esp";
             path = ..;
@@ -1183,8 +1172,8 @@
             isa = PBXGroup;
             children = (
 				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000113 /* appweb.h */,
-				004E6C37004F3D0E00000077 /* cgiHandler.c */,
+				004E6C37004F3D0E00000115 /* appweb.h */,
+				004E6C37004F3D0E00000075 /* cgiHandler.c */,
 			);
             name = "mod_cgi";
             path = ..;
@@ -1194,10 +1183,21 @@
             isa = PBXGroup;
             children = (
 				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000113 /* appweb.h */,
-				004E6C37004F3D0E00000079 /* sslModule.c */,
+				004E6C37004F3D0E00000115 /* appweb.h */,
+				004E6C37004F3D0E00000077 /* sslModule.c */,
 			);
             name = "mod_ssl";
+            path = ..;
+            sourceTree = SOURCE_ROOT;
+        };
+		004E6C37004F3D0E00000141 /* authpass */ = {
+            isa = PBXGroup;
+            children = (
+				004E6C37004F3D0E0000010B /* bit.h */,
+				004E6C37004F3D0E00000115 /* appweb.h */,
+				004E6C37004F3D0E00000079 /* authpass.c */,
+			);
+            name = "authpass";
             path = ..;
             sourceTree = SOURCE_ROOT;
         };
@@ -1226,8 +1226,8 @@
             isa = PBXGroup;
             children = (
 				004E6C37004F3D0E0000010B /* bit.h */,
-				004E6C37004F3D0E00000113 /* appweb.h */,
-				004E6C37004F3D0E00000118 /* esp.h */,
+				004E6C37004F3D0E00000115 /* appweb.h */,
+				004E6C37004F3D0E00000117 /* esp.h */,
 				004E6C37004F3D0E0000007F /* appweb.c */,
 			);
             name = "appweb";
@@ -1256,14 +1256,14 @@
 				004E6C37004F3D0E0000008A /* libpcre */,
 				004E6C37004F3D0E0000008C /* libhttp */,
 				004E6C37004F3D0E00000112 /* http */,
-				004E6C37004F3D0E00000114 /* authpass */,
-				004E6C37004F3D0E00000095 /* libsqlite3 */,
-				004E6C37004F3D0E00000116 /* sqlite */,
-				004E6C37004F3D0E00000090 /* libappweb */,
-				004E6C37004F3D0E0000011A /* mod_esp */,
-				004E6C37004F3D0E0000011B /* esp */,
-				004E6C37004F3D0E0000011C /* mod_cgi */,
-				004E6C37004F3D0E0000011D /* mod_ssl */,
+				004E6C37004F3D0E00000090 /* libsqlite3 */,
+				004E6C37004F3D0E00000114 /* sqlite */,
+				004E6C37004F3D0E00000095 /* libappweb */,
+				004E6C37004F3D0E00000119 /* mod_esp */,
+				004E6C37004F3D0E0000011A /* esp */,
+				004E6C37004F3D0E0000011B /* mod_cgi */,
+				004E6C37004F3D0E0000011C /* mod_ssl */,
+				004E6C37004F3D0E0000011D /* authpass */,
 				004E6C37004F3D0E0000011E /* cgiProgram */,
 				004E6C37004F3D0E0000011F /* setConfig */,
 				004E6C37004F3D0E00000120 /* appweb */,
@@ -1401,9 +1401,9 @@
 			productReference = 004E6C37004F3D0E00000112 /* http */;
 			productType = "com.apple.product-type.tool";
 		};
-		004E6C37004F3D0E000000F0 /* authpass */ = {
+		004E6C37004F3D0E000000C4 /* libsqlite3 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004E6C37004F3D0E00000167 /* Build configuration list for PBXNativeTarget "authpass" */;
+			buildConfigurationList = 004E6C37004F3D0E00000167 /* Build configuration list for PBXNativeTarget "libsqlite3" */;
 			buildPhases = (
 				004E6C37004F3D0E00000166 /* Sources */,
 				004E6C37004F3D0E0000012A /* Frameworks */,
@@ -1411,34 +1411,34 @@
 			buildRules = (
 			);
 			dependencies = (
-				004E6C37004F3D0E00000168 /* libappweb */,
-				004E6C37004F3D0E00000169 /* Prep */,				
+				004E6C37004F3D0E00000168 /* Prep */,				
 			);
-			name = authpass;
+			name = libsqlite3;
 			productName = appweb;
-			productReference = 004E6C37004F3D0E00000114 /* authpass */;
-			productType = "com.apple.product-type.tool";
+			productReference = 004E6C37004F3D0E00000090 /* libsqlite3 */;
+			productType = "com.apple.product-type.library.dynamic";
 		};
-		004E6C37004F3D0E000000C7 /* libsqlite3 */ = {
+		004E6C37004F3D0E000000F1 /* sqlite */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004E6C37004F3D0E0000016B /* Build configuration list for PBXNativeTarget "libsqlite3" */;
+			buildConfigurationList = 004E6C37004F3D0E0000016A /* Build configuration list for PBXNativeTarget "sqlite" */;
 			buildPhases = (
-				004E6C37004F3D0E0000016A /* Sources */,
+				004E6C37004F3D0E00000169 /* Sources */,
 				004E6C37004F3D0E0000012B /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				004E6C37004F3D0E0000016B /* libsqlite3 */,
 				004E6C37004F3D0E0000016C /* Prep */,				
 			);
-			name = libsqlite3;
+			name = sqlite;
 			productName = appweb;
-			productReference = 004E6C37004F3D0E00000095 /* libsqlite3 */;
-			productType = "com.apple.product-type.library.dynamic";
+			productReference = 004E6C37004F3D0E00000114 /* sqlite */;
+			productType = "com.apple.product-type.tool";
 		};
-		004E6C37004F3D0E000000F3 /* sqlite */ = {
+		004E6C37004F3D0E000000C9 /* libappweb */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004E6C37004F3D0E0000016E /* Build configuration list for PBXNativeTarget "sqlite" */;
+			buildConfigurationList = 004E6C37004F3D0E0000016E /* Build configuration list for PBXNativeTarget "libappweb" */;
 			buildPhases = (
 				004E6C37004F3D0E0000016D /* Sources */,
 				004E6C37004F3D0E0000012C /* Frameworks */,
@@ -1446,17 +1446,17 @@
 			buildRules = (
 			);
 			dependencies = (
-				004E6C37004F3D0E0000016F /* libsqlite3 */,
+				004E6C37004F3D0E0000016F /* libhttp */,
 				004E6C37004F3D0E00000170 /* Prep */,				
 			);
-			name = sqlite;
+			name = libappweb;
 			productName = appweb;
-			productReference = 004E6C37004F3D0E00000116 /* sqlite */;
-			productType = "com.apple.product-type.tool";
+			productReference = 004E6C37004F3D0E00000095 /* libappweb */;
+			productType = "com.apple.product-type.library.dynamic";
 		};
-		004E6C37004F3D0E000000C3 /* libappweb */ = {
+		004E6C37004F3D0E000000F4 /* mod_esp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004E6C37004F3D0E00000172 /* Build configuration list for PBXNativeTarget "libappweb" */;
+			buildConfigurationList = 004E6C37004F3D0E00000172 /* Build configuration list for PBXNativeTarget "mod_esp" */;
 			buildPhases = (
 				004E6C37004F3D0E00000171 /* Sources */,
 				004E6C37004F3D0E0000012D /* Frameworks */,
@@ -1464,17 +1464,17 @@
 			buildRules = (
 			);
 			dependencies = (
-				004E6C37004F3D0E00000173 /* libhttp */,
+				004E6C37004F3D0E00000173 /* libappweb */,
 				004E6C37004F3D0E00000174 /* Prep */,				
 			);
-			name = libappweb;
+			name = mod_esp;
 			productName = appweb;
-			productReference = 004E6C37004F3D0E00000090 /* libappweb */;
+			productReference = 004E6C37004F3D0E00000119 /* mod_esp */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
-		004E6C37004F3D0E000000F6 /* mod_esp */ = {
+		004E6C37004F3D0E000000F6 /* esp */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004E6C37004F3D0E00000176 /* Build configuration list for PBXNativeTarget "mod_esp" */;
+			buildConfigurationList = 004E6C37004F3D0E00000176 /* Build configuration list for PBXNativeTarget "esp" */;
 			buildPhases = (
 				004E6C37004F3D0E00000175 /* Sources */,
 				004E6C37004F3D0E0000012E /* Frameworks */,
@@ -1485,14 +1485,14 @@
 				004E6C37004F3D0E00000177 /* libappweb */,
 				004E6C37004F3D0E00000178 /* Prep */,				
 			);
-			name = mod_esp;
+			name = esp;
 			productName = appweb;
-			productReference = 004E6C37004F3D0E0000011A /* mod_esp */;
-			productType = "com.apple.product-type.library.dynamic";
+			productReference = 004E6C37004F3D0E0000011A /* esp */;
+			productType = "com.apple.product-type.tool";
 		};
-		004E6C37004F3D0E000000F8 /* esp */ = {
+		004E6C37004F3D0E000000FB /* mod_cgi */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004E6C37004F3D0E0000017A /* Build configuration list for PBXNativeTarget "esp" */;
+			buildConfigurationList = 004E6C37004F3D0E0000017A /* Build configuration list for PBXNativeTarget "mod_cgi" */;
 			buildPhases = (
 				004E6C37004F3D0E00000179 /* Sources */,
 				004E6C37004F3D0E0000012F /* Frameworks */,
@@ -1503,14 +1503,14 @@
 				004E6C37004F3D0E0000017B /* libappweb */,
 				004E6C37004F3D0E0000017C /* Prep */,				
 			);
-			name = esp;
+			name = mod_cgi;
 			productName = appweb;
-			productReference = 004E6C37004F3D0E0000011B /* esp */;
-			productType = "com.apple.product-type.tool";
+			productReference = 004E6C37004F3D0E0000011B /* mod_cgi */;
+			productType = "com.apple.product-type.library.dynamic";
 		};
-		004E6C37004F3D0E000000FD /* mod_cgi */ = {
+		004E6C37004F3D0E000000FD /* mod_ssl */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004E6C37004F3D0E0000017E /* Build configuration list for PBXNativeTarget "mod_cgi" */;
+			buildConfigurationList = 004E6C37004F3D0E0000017E /* Build configuration list for PBXNativeTarget "mod_ssl" */;
 			buildPhases = (
 				004E6C37004F3D0E0000017D /* Sources */,
 				004E6C37004F3D0E00000130 /* Frameworks */,
@@ -1521,14 +1521,14 @@
 				004E6C37004F3D0E0000017F /* libappweb */,
 				004E6C37004F3D0E00000180 /* Prep */,				
 			);
-			name = mod_cgi;
+			name = mod_ssl;
 			productName = appweb;
-			productReference = 004E6C37004F3D0E0000011C /* mod_cgi */;
+			productReference = 004E6C37004F3D0E0000011C /* mod_ssl */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
-		004E6C37004F3D0E000000FF /* mod_ssl */ = {
+		004E6C37004F3D0E000000FF /* authpass */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 004E6C37004F3D0E00000182 /* Build configuration list for PBXNativeTarget "mod_ssl" */;
+			buildConfigurationList = 004E6C37004F3D0E00000182 /* Build configuration list for PBXNativeTarget "authpass" */;
 			buildPhases = (
 				004E6C37004F3D0E00000181 /* Sources */,
 				004E6C37004F3D0E00000131 /* Frameworks */,
@@ -1539,10 +1539,10 @@
 				004E6C37004F3D0E00000183 /* libappweb */,
 				004E6C37004F3D0E00000184 /* Prep */,				
 			);
-			name = mod_ssl;
+			name = authpass;
 			productName = appweb;
-			productReference = 004E6C37004F3D0E0000011D /* mod_ssl */;
-			productType = "com.apple.product-type.library.dynamic";
+			productReference = 004E6C37004F3D0E0000011D /* authpass */;
+			productType = "com.apple.product-type.tool";
 		};
 		004E6C37004F3D0E000000DE /* cgiProgram */ = {
 			isa = PBXNativeTarget;
@@ -1828,24 +1828,24 @@ fi";
 			targets = (
 				004E6C37004F3D0E00000024 /* All */,
 				004E6C37004F3D0E00000040 /* Prep */,
-				004E6C37004F3D0E000000C3 /* libappweb */,
+				004E6C37004F3D0E000000C9 /* libappweb */,
 				004E6C37004F3D0E000000C0 /* libhttp */,
 				004E6C37004F3D0E000000B4 /* libmpr */,
 				004E6C37004F3D0E000000E6 /* libmprssl */,
 				004E6C37004F3D0E000000BD /* libpcre */,
-				004E6C37004F3D0E000000C7 /* libsqlite3 */,
-				004E6C37004F3D0E000000FD /* mod_cgi */,
-				004E6C37004F3D0E000000F6 /* mod_esp */,
-				004E6C37004F3D0E000000FF /* mod_ssl */,
+				004E6C37004F3D0E000000C4 /* libsqlite3 */,
+				004E6C37004F3D0E000000FB /* mod_cgi */,
+				004E6C37004F3D0E000000F4 /* mod_esp */,
+				004E6C37004F3D0E000000FD /* mod_ssl */,
 				004E6C37004F3D0E00000104 /* appweb */,
-				004E6C37004F3D0E000000F0 /* authpass */,
+				004E6C37004F3D0E000000FF /* authpass */,
 				004E6C37004F3D0E000000DE /* cgiProgram */,
-				004E6C37004F3D0E000000F8 /* esp */,
+				004E6C37004F3D0E000000F6 /* esp */,
 				004E6C37004F3D0E000000EE /* http */,
 				004E6C37004F3D0E000000EA /* makerom */,
 				004E6C37004F3D0E000000E8 /* manager */,
 				004E6C37004F3D0E00000102 /* setConfig */,
-				004E6C37004F3D0E000000F3 /* sqlite */,
+				004E6C37004F3D0E000000F1 /* sqlite */,
 				004E6C37004F3D0E00000106 /* testAppweb */,
 				004E6C37004F3D0E0000000E /* esp-appweb.conf */,
 				004E6C37004F3D0E00000006 /* esp.conf */,
@@ -1915,89 +1915,89 @@ fi";
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004E6C37004F3D0E00000166 /* authpass Sources */ = {
+		004E6C37004F3D0E00000166 /* libsqlite3 Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004E6C37004F3D0E00000050 /* authpass.c in Sources */,
+				004E6C37004F3D0E00000050 /* sqlite3.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004E6C37004F3D0E0000016A /* libsqlite3 Sources */ = {
+		004E6C37004F3D0E00000169 /* sqlite Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004E6C37004F3D0E00000052 /* sqlite3.c in Sources */,
+				004E6C37004F3D0E00000052 /* sqlite.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004E6C37004F3D0E0000016D /* sqlite Sources */ = {
+		004E6C37004F3D0E0000016D /* libappweb Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004E6C37004F3D0E00000054 /* sqlite.c in Sources */,
+				004E6C37004F3D0E00000054 /* config.c in Sources */,
+				004E6C37004F3D0E00000056 /* convenience.c in Sources */,
+				004E6C37004F3D0E00000058 /* dirHandler.c in Sources */,
+				004E6C37004F3D0E0000005A /* fileHandler.c in Sources */,
+				004E6C37004F3D0E0000005C /* log.c in Sources */,
+				004E6C37004F3D0E0000005E /* server.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004E6C37004F3D0E00000171 /* libappweb Sources */ = {
+		004E6C37004F3D0E00000171 /* mod_esp Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004E6C37004F3D0E00000056 /* config.c in Sources */,
-				004E6C37004F3D0E00000058 /* convenience.c in Sources */,
-				004E6C37004F3D0E0000005A /* dirHandler.c in Sources */,
-				004E6C37004F3D0E0000005C /* fileHandler.c in Sources */,
-				004E6C37004F3D0E0000005E /* log.c in Sources */,
-				004E6C37004F3D0E00000060 /* server.c in Sources */,
+				004E6C37004F3D0E00000060 /* edi.c in Sources */,
+				004E6C37004F3D0E00000062 /* espAbbrev.c in Sources */,
+				004E6C37004F3D0E00000064 /* espFramework.c in Sources */,
+				004E6C37004F3D0E00000066 /* espHandler.c in Sources */,
+				004E6C37004F3D0E00000068 /* espHtml.c in Sources */,
+				004E6C37004F3D0E0000006A /* espSession.c in Sources */,
+				004E6C37004F3D0E0000006C /* espTemplate.c in Sources */,
+				004E6C37004F3D0E0000006E /* mdb.c in Sources */,
+				004E6C37004F3D0E00000070 /* sdb.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004E6C37004F3D0E00000175 /* mod_esp Sources */ = {
+		004E6C37004F3D0E00000175 /* esp Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004E6C37004F3D0E00000062 /* edi.c in Sources */,
-				004E6C37004F3D0E00000064 /* espAbbrev.c in Sources */,
-				004E6C37004F3D0E00000066 /* espFramework.c in Sources */,
-				004E6C37004F3D0E00000068 /* espHandler.c in Sources */,
-				004E6C37004F3D0E0000006A /* espHtml.c in Sources */,
-				004E6C37004F3D0E0000006C /* espSession.c in Sources */,
-				004E6C37004F3D0E0000006E /* espTemplate.c in Sources */,
-				004E6C37004F3D0E00000070 /* mdb.c in Sources */,
-				004E6C37004F3D0E00000072 /* sdb.c in Sources */,
+				004E6C37004F3D0E00000060 /* edi.c in Sources */,
+				004E6C37004F3D0E00000072 /* esp.c in Sources */,
+				004E6C37004F3D0E00000062 /* espAbbrev.c in Sources */,
+				004E6C37004F3D0E00000064 /* espFramework.c in Sources */,
+				004E6C37004F3D0E00000066 /* espHandler.c in Sources */,
+				004E6C37004F3D0E00000068 /* espHtml.c in Sources */,
+				004E6C37004F3D0E0000006A /* espSession.c in Sources */,
+				004E6C37004F3D0E0000006C /* espTemplate.c in Sources */,
+				004E6C37004F3D0E0000006E /* mdb.c in Sources */,
+				004E6C37004F3D0E00000070 /* sdb.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004E6C37004F3D0E00000179 /* esp Sources */ = {
+		004E6C37004F3D0E00000179 /* mod_cgi Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004E6C37004F3D0E00000062 /* edi.c in Sources */,
-				004E6C37004F3D0E00000074 /* esp.c in Sources */,
-				004E6C37004F3D0E00000064 /* espAbbrev.c in Sources */,
-				004E6C37004F3D0E00000066 /* espFramework.c in Sources */,
-				004E6C37004F3D0E00000068 /* espHandler.c in Sources */,
-				004E6C37004F3D0E0000006A /* espHtml.c in Sources */,
-				004E6C37004F3D0E0000006C /* espSession.c in Sources */,
-				004E6C37004F3D0E0000006E /* espTemplate.c in Sources */,
-				004E6C37004F3D0E00000070 /* mdb.c in Sources */,
-				004E6C37004F3D0E00000072 /* sdb.c in Sources */,
+				004E6C37004F3D0E00000074 /* cgiHandler.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004E6C37004F3D0E0000017D /* mod_cgi Sources */ = {
+		004E6C37004F3D0E0000017D /* mod_ssl Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004E6C37004F3D0E00000076 /* cgiHandler.c in Sources */,
+				004E6C37004F3D0E00000076 /* sslModule.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		004E6C37004F3D0E00000181 /* mod_ssl Sources */ = {
+		004E6C37004F3D0E00000181 /* authpass Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				004E6C37004F3D0E00000078 /* sslModule.c in Sources */,
+				004E6C37004F3D0E00000078 /* authpass.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2102,92 +2102,92 @@ fi";
 			target = 004E6C37004F3D0E00000040 /* Prep */;
 			targetProxy = 004E6C37004F3D0E000000C1 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000168 /* PBXTargetDependency authpass depends on libappweb */ = {
-			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C3 /* libappweb */;
-			targetProxy = 004E6C37004F3D0E000000C2 /* PBXContainerItemProxy */;
-		};
-		004E6C37004F3D0E00000169 /* PBXTargetDependency authpass depends on Prep */ = {
+		004E6C37004F3D0E00000168 /* PBXTargetDependency libsqlite3 depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
-			targetProxy = 004E6C37004F3D0E000000C4 /* PBXContainerItemProxy */;
+			targetProxy = 004E6C37004F3D0E000000C2 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E0000016C /* PBXTargetDependency libsqlite3 depends on Prep */ = {
+		004E6C37004F3D0E0000016B /* PBXTargetDependency sqlite depends on libsqlite3 */ = {
+			isa = PBXTargetDependency;
+			target = 004E6C37004F3D0E000000C4 /* libsqlite3 */;
+			targetProxy = 004E6C37004F3D0E000000C3 /* PBXContainerItemProxy */;
+		};
+		004E6C37004F3D0E0000016C /* PBXTargetDependency sqlite depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
 			targetProxy = 004E6C37004F3D0E000000C5 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E0000016F /* PBXTargetDependency sqlite depends on libsqlite3 */ = {
-			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C7 /* libsqlite3 */;
-			targetProxy = 004E6C37004F3D0E000000C6 /* PBXContainerItemProxy */;
-		};
-		004E6C37004F3D0E00000170 /* PBXTargetDependency sqlite depends on Prep */ = {
-			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E00000040 /* Prep */;
-			targetProxy = 004E6C37004F3D0E000000C8 /* PBXContainerItemProxy */;
-		};
-		004E6C37004F3D0E00000173 /* PBXTargetDependency libappweb depends on libhttp */ = {
+		004E6C37004F3D0E0000016F /* PBXTargetDependency libappweb depends on libhttp */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E000000C0 /* libhttp */;
-			targetProxy = 004E6C37004F3D0E000000C9 /* PBXContainerItemProxy */;
+			targetProxy = 004E6C37004F3D0E000000C6 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000174 /* PBXTargetDependency libappweb depends on Prep */ = {
+		004E6C37004F3D0E00000170 /* PBXTargetDependency libappweb depends on Prep */ = {
+			isa = PBXTargetDependency;
+			target = 004E6C37004F3D0E00000040 /* Prep */;
+			targetProxy = 004E6C37004F3D0E000000C7 /* PBXContainerItemProxy */;
+		};
+		004E6C37004F3D0E00000173 /* PBXTargetDependency mod_esp depends on libappweb */ = {
+			isa = PBXTargetDependency;
+			target = 004E6C37004F3D0E000000C9 /* libappweb */;
+			targetProxy = 004E6C37004F3D0E000000C8 /* PBXContainerItemProxy */;
+		};
+		004E6C37004F3D0E00000174 /* PBXTargetDependency mod_esp depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
 			targetProxy = 004E6C37004F3D0E000000CA /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000177 /* PBXTargetDependency mod_esp depends on libappweb */ = {
+		004E6C37004F3D0E00000177 /* PBXTargetDependency esp depends on libappweb */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C3 /* libappweb */;
+			target = 004E6C37004F3D0E000000C9 /* libappweb */;
 			targetProxy = 004E6C37004F3D0E000000CB /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000178 /* PBXTargetDependency mod_esp depends on Prep */ = {
+		004E6C37004F3D0E00000178 /* PBXTargetDependency esp depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
 			targetProxy = 004E6C37004F3D0E000000CC /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E0000017B /* PBXTargetDependency esp depends on libappweb */ = {
-			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C3 /* libappweb */;
-			targetProxy = 004E6C37004F3D0E000000CD /* PBXContainerItemProxy */;
-		};
-		004E6C37004F3D0E0000017C /* PBXTargetDependency esp depends on Prep */ = {
-			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E00000040 /* Prep */;
-			targetProxy = 004E6C37004F3D0E000000CE /* PBXContainerItemProxy */;
-		};
 		004E6C37004F3D0E00000008 /* PBXTargetDependency esp.conf depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
-			targetProxy = 004E6C37004F3D0E000000CF /* PBXContainerItemProxy */;
+			targetProxy = 004E6C37004F3D0E000000CD /* PBXContainerItemProxy */;
 		};
 		004E6C37004F3D0E0000000C /* PBXTargetDependency esp.www depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
-			targetProxy = 004E6C37004F3D0E000000D0 /* PBXContainerItemProxy */;
+			targetProxy = 004E6C37004F3D0E000000CE /* PBXContainerItemProxy */;
 		};
 		004E6C37004F3D0E00000010 /* PBXTargetDependency esp-appweb.conf depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
+			targetProxy = 004E6C37004F3D0E000000CF /* PBXContainerItemProxy */;
+		};
+		004E6C37004F3D0E0000017B /* PBXTargetDependency mod_cgi depends on libappweb */ = {
+			isa = PBXTargetDependency;
+			target = 004E6C37004F3D0E000000C9 /* libappweb */;
+			targetProxy = 004E6C37004F3D0E000000D0 /* PBXContainerItemProxy */;
+		};
+		004E6C37004F3D0E0000017C /* PBXTargetDependency mod_cgi depends on Prep */ = {
+			isa = PBXTargetDependency;
+			target = 004E6C37004F3D0E00000040 /* Prep */;
 			targetProxy = 004E6C37004F3D0E000000D1 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E0000017F /* PBXTargetDependency mod_cgi depends on libappweb */ = {
+		004E6C37004F3D0E0000017F /* PBXTargetDependency mod_ssl depends on libappweb */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C3 /* libappweb */;
+			target = 004E6C37004F3D0E000000C9 /* libappweb */;
 			targetProxy = 004E6C37004F3D0E000000D2 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000180 /* PBXTargetDependency mod_cgi depends on Prep */ = {
+		004E6C37004F3D0E00000180 /* PBXTargetDependency mod_ssl depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
 			targetProxy = 004E6C37004F3D0E000000D3 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000183 /* PBXTargetDependency mod_ssl depends on libappweb */ = {
+		004E6C37004F3D0E00000183 /* PBXTargetDependency authpass depends on libappweb */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C3 /* libappweb */;
+			target = 004E6C37004F3D0E000000C9 /* libappweb */;
 			targetProxy = 004E6C37004F3D0E000000D4 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000184 /* PBXTargetDependency mod_ssl depends on Prep */ = {
+		004E6C37004F3D0E00000184 /* PBXTargetDependency authpass depends on Prep */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000040 /* Prep */;
 			targetProxy = 004E6C37004F3D0E000000D5 /* PBXContainerItemProxy */;
@@ -2209,7 +2209,7 @@ fi";
 		};
 		004E6C37004F3D0E0000018E /* PBXTargetDependency appweb depends on libappweb */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C3 /* libappweb */;
+			target = 004E6C37004F3D0E000000C9 /* libappweb */;
 			targetProxy = 004E6C37004F3D0E000000D9 /* PBXContainerItemProxy */;
 		};
 		004E6C37004F3D0E0000018F /* PBXTargetDependency appweb depends on Prep */ = {
@@ -2219,7 +2219,7 @@ fi";
 		};
 		004E6C37004F3D0E00000192 /* PBXTargetDependency testAppweb depends on libappweb */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C3 /* libappweb */;
+			target = 004E6C37004F3D0E000000C9 /* libappweb */;
 			targetProxy = 004E6C37004F3D0E000000DB /* PBXContainerItemProxy */;
 		};
 		004E6C37004F3D0E00000193 /* PBXTargetDependency testAppweb depends on Prep */ = {
@@ -2292,59 +2292,59 @@ fi";
 			target = 004E6C37004F3D0E000000EE /* http */;
 			targetProxy = 004E6C37004F3D0E000000ED /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E0000002C /* PBXTargetDependency All depends on authpass */ = {
+		004E6C37004F3D0E0000002C /* PBXTargetDependency All depends on libsqlite3 */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000F0 /* authpass */;
+			target = 004E6C37004F3D0E000000C4 /* libsqlite3 */;
 			targetProxy = 004E6C37004F3D0E000000EF /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E0000002D /* PBXTargetDependency All depends on libsqlite3 */ = {
+		004E6C37004F3D0E0000002D /* PBXTargetDependency All depends on sqlite */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C7 /* libsqlite3 */;
-			targetProxy = 004E6C37004F3D0E000000F1 /* PBXContainerItemProxy */;
+			target = 004E6C37004F3D0E000000F1 /* sqlite */;
+			targetProxy = 004E6C37004F3D0E000000F0 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E0000002E /* PBXTargetDependency All depends on sqlite */ = {
+		004E6C37004F3D0E0000002E /* PBXTargetDependency All depends on libappweb */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000F3 /* sqlite */;
+			target = 004E6C37004F3D0E000000C9 /* libappweb */;
 			targetProxy = 004E6C37004F3D0E000000F2 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E0000002F /* PBXTargetDependency All depends on libappweb */ = {
+		004E6C37004F3D0E0000002F /* PBXTargetDependency All depends on mod_esp */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000C3 /* libappweb */;
-			targetProxy = 004E6C37004F3D0E000000F4 /* PBXContainerItemProxy */;
+			target = 004E6C37004F3D0E000000F4 /* mod_esp */;
+			targetProxy = 004E6C37004F3D0E000000F3 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000030 /* PBXTargetDependency All depends on mod_esp */ = {
+		004E6C37004F3D0E00000030 /* PBXTargetDependency All depends on esp */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000F6 /* mod_esp */;
+			target = 004E6C37004F3D0E000000F6 /* esp */;
 			targetProxy = 004E6C37004F3D0E000000F5 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000031 /* PBXTargetDependency All depends on esp */ = {
-			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000F8 /* esp */;
-			targetProxy = 004E6C37004F3D0E000000F7 /* PBXContainerItemProxy */;
-		};
-		004E6C37004F3D0E00000032 /* PBXTargetDependency All depends on esp.conf */ = {
+		004E6C37004F3D0E00000031 /* PBXTargetDependency All depends on esp.conf */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E00000006 /* esp.conf */;
-			targetProxy = 004E6C37004F3D0E000000F9 /* PBXContainerItemProxy */;
+			targetProxy = 004E6C37004F3D0E000000F7 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000033 /* PBXTargetDependency All depends on esp.www */ = {
+		004E6C37004F3D0E00000032 /* PBXTargetDependency All depends on esp.www */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E0000000A /* esp.www */;
-			targetProxy = 004E6C37004F3D0E000000FA /* PBXContainerItemProxy */;
+			targetProxy = 004E6C37004F3D0E000000F8 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000034 /* PBXTargetDependency All depends on esp-appweb.conf */ = {
+		004E6C37004F3D0E00000033 /* PBXTargetDependency All depends on esp-appweb.conf */ = {
 			isa = PBXTargetDependency;
 			target = 004E6C37004F3D0E0000000E /* esp-appweb.conf */;
-			targetProxy = 004E6C37004F3D0E000000FB /* PBXContainerItemProxy */;
+			targetProxy = 004E6C37004F3D0E000000F9 /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000035 /* PBXTargetDependency All depends on mod_cgi */ = {
+		004E6C37004F3D0E00000034 /* PBXTargetDependency All depends on mod_cgi */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000FD /* mod_cgi */;
+			target = 004E6C37004F3D0E000000FB /* mod_cgi */;
+			targetProxy = 004E6C37004F3D0E000000FA /* PBXContainerItemProxy */;
+		};
+		004E6C37004F3D0E00000035 /* PBXTargetDependency All depends on mod_ssl */ = {
+			isa = PBXTargetDependency;
+			target = 004E6C37004F3D0E000000FD /* mod_ssl */;
 			targetProxy = 004E6C37004F3D0E000000FC /* PBXContainerItemProxy */;
 		};
-		004E6C37004F3D0E00000036 /* PBXTargetDependency All depends on mod_ssl */ = {
+		004E6C37004F3D0E00000036 /* PBXTargetDependency All depends on authpass */ = {
 			isa = PBXTargetDependency;
-			target = 004E6C37004F3D0E000000FF /* mod_ssl */;
+			target = 004E6C37004F3D0E000000FF /* authpass */;
 			targetProxy = 004E6C37004F3D0E000000FE /* PBXContainerItemProxy */;
 		};
 		004E6C37004F3D0E00000037 /* PBXTargetDependency All depends on cgiProgram */ = {
@@ -2726,29 +2726,22 @@ fi";
 		004E6C37004F3D0E000001A2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = authpass;
+				PRODUCT_NAME = libsqlite3;
+				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
 					"$(inherited)"
 				);
-				OTHER_LDFLAGS = (
-					"-lpam",
-					"$(inherited)"
-				);
-
 			};
 			name = Debug;
 		};
 		004E6C37004F3D0E000001A3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = authpass;
+				PRODUCT_NAME = libsqlite3;
+				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
 
-				OTHER_LDFLAGS = (
-					"-lpam",
-					"$(inherited)"
-				);
 
 			};
 			name = Release;
@@ -2756,8 +2749,7 @@ fi";
 		004E6C37004F3D0E000001A4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = libsqlite3;
-				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
+				PRODUCT_NAME = sqlite;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
@@ -2769,8 +2761,7 @@ fi";
 		004E6C37004F3D0E000001A5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = libsqlite3;
-				GCC_WARN_INHIBIT_ALL_WARNINGS = YES;
+				PRODUCT_NAME = sqlite;
 
 
 			};
@@ -2779,20 +2770,29 @@ fi";
 		004E6C37004F3D0E000001A6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = sqlite;
+				PRODUCT_NAME = libappweb;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
 					"$(inherited)"
 				);
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
+
 			};
 			name = Debug;
 		};
 		004E6C37004F3D0E000001A7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = sqlite;
+				PRODUCT_NAME = libappweb;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2800,7 +2800,7 @@ fi";
 		004E6C37004F3D0E000001A8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = libappweb;
+				PRODUCT_NAME = mod_esp;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
@@ -2817,7 +2817,7 @@ fi";
 		004E6C37004F3D0E000001A9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = libappweb;
+				PRODUCT_NAME = mod_esp;
 
 				OTHER_LDFLAGS = (
 					"-lpam",
@@ -2830,7 +2830,7 @@ fi";
 		004E6C37004F3D0E000001AA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = mod_esp;
+				PRODUCT_NAME = esp;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
@@ -2847,7 +2847,7 @@ fi";
 		004E6C37004F3D0E000001AB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = mod_esp;
+				PRODUCT_NAME = esp;
 
 				OTHER_LDFLAGS = (
 					"-lpam",
@@ -2860,29 +2860,20 @@ fi";
 		004E6C37004F3D0E000001AC /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = esp;
+				PRODUCT_NAME = esp.conf;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
 					"$(inherited)"
 				);
-				OTHER_LDFLAGS = (
-					"-lpam",
-					"$(inherited)"
-				);
-
 			};
 			name = Debug;
 		};
 		004E6C37004F3D0E000001AD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = esp;
+				PRODUCT_NAME = esp.conf;
 
-				OTHER_LDFLAGS = (
-					"-lpam",
-					"$(inherited)"
-				);
 
 			};
 			name = Release;
@@ -2890,7 +2881,7 @@ fi";
 		004E6C37004F3D0E000001AE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = esp.conf;
+				PRODUCT_NAME = esp.www;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
@@ -2902,7 +2893,7 @@ fi";
 		004E6C37004F3D0E000001AF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = esp.conf;
+				PRODUCT_NAME = esp.www;
 
 
 			};
@@ -2911,7 +2902,7 @@ fi";
 		004E6C37004F3D0E000001B0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = esp.www;
+				PRODUCT_NAME = esp-appweb.conf;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
@@ -2923,7 +2914,7 @@ fi";
 		004E6C37004F3D0E000001B1 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = esp.www;
+				PRODUCT_NAME = esp-appweb.conf;
 
 
 			};
@@ -2932,20 +2923,29 @@ fi";
 		004E6C37004F3D0E000001B2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = esp-appweb.conf;
+				PRODUCT_NAME = mod_cgi;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
 					"$(inherited)"
 				);
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
+
 			};
 			name = Debug;
 		};
 		004E6C37004F3D0E000001B3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = esp-appweb.conf;
+				PRODUCT_NAME = mod_cgi;
 
+				OTHER_LDFLAGS = (
+					"-lpam",
+					"$(inherited)"
+				);
 
 			};
 			name = Release;
@@ -2953,7 +2953,7 @@ fi";
 		004E6C37004F3D0E000001B4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = mod_cgi;
+				PRODUCT_NAME = mod_ssl;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
@@ -2970,7 +2970,7 @@ fi";
 		004E6C37004F3D0E000001B5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = mod_cgi;
+				PRODUCT_NAME = mod_ssl;
 
 				OTHER_LDFLAGS = (
 					"-lpam",
@@ -2983,7 +2983,7 @@ fi";
 		004E6C37004F3D0E000001B6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = mod_ssl;
+				PRODUCT_NAME = authpass;
 
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"BIT_DEBUG",
@@ -3000,7 +3000,7 @@ fi";
 		004E6C37004F3D0E000001B7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				PRODUCT_NAME = mod_ssl;
+				PRODUCT_NAME = authpass;
 
 				OTHER_LDFLAGS = (
 					"-lpam",
@@ -3313,7 +3313,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E00000167 /* Build configuration list for PBXNativeTarget "authpass" */ = {
+		004E6C37004F3D0E00000167 /* Build configuration list for PBXNativeTarget "libsqlite3" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001A2 /* Debug */,
@@ -3322,7 +3322,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E0000016B /* Build configuration list for PBXNativeTarget "libsqlite3" */ = {
+		004E6C37004F3D0E0000016A /* Build configuration list for PBXNativeTarget "sqlite" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001A4 /* Debug */,
@@ -3331,7 +3331,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E0000016E /* Build configuration list for PBXNativeTarget "sqlite" */ = {
+		004E6C37004F3D0E0000016E /* Build configuration list for PBXNativeTarget "libappweb" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001A6 /* Debug */,
@@ -3340,7 +3340,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E00000172 /* Build configuration list for PBXNativeTarget "libappweb" */ = {
+		004E6C37004F3D0E00000172 /* Build configuration list for PBXNativeTarget "mod_esp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001A8 /* Debug */,
@@ -3349,7 +3349,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E00000176 /* Build configuration list for PBXNativeTarget "mod_esp" */ = {
+		004E6C37004F3D0E00000176 /* Build configuration list for PBXNativeTarget "esp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001AA /* Debug */,
@@ -3358,7 +3358,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E0000017A /* Build configuration list for PBXNativeTarget "esp" */ = {
+		004E6C37004F3D0E00000005 /* Build configuration list for PBXNativeTarget "esp.conf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001AC /* Debug */,
@@ -3367,7 +3367,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E00000005 /* Build configuration list for PBXNativeTarget "esp.conf" */ = {
+		004E6C37004F3D0E00000009 /* Build configuration list for PBXNativeTarget "esp.www" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001AE /* Debug */,
@@ -3376,7 +3376,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E00000009 /* Build configuration list for PBXNativeTarget "esp.www" */ = {
+		004E6C37004F3D0E0000000D /* Build configuration list for PBXNativeTarget "esp-appweb.conf" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001B0 /* Debug */,
@@ -3385,7 +3385,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E0000000D /* Build configuration list for PBXNativeTarget "esp-appweb.conf" */ = {
+		004E6C37004F3D0E0000017A /* Build configuration list for PBXNativeTarget "mod_cgi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001B2 /* Debug */,
@@ -3394,7 +3394,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E0000017E /* Build configuration list for PBXNativeTarget "mod_cgi" */ = {
+		004E6C37004F3D0E0000017E /* Build configuration list for PBXNativeTarget "mod_ssl" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001B4 /* Debug */,
@@ -3403,7 +3403,7 @@ fi";
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		004E6C37004F3D0E00000182 /* Build configuration list for PBXNativeTarget "mod_ssl" */ = {
+		004E6C37004F3D0E00000182 /* Build configuration list for PBXNativeTarget "authpass" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				004E6C37004F3D0E000001B6 /* Debug */,

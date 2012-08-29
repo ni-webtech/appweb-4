@@ -140,9 +140,9 @@ ${CC} -c -o ${CONFIG}/obj/cgiHandler.o -Wall -fPIC ${LDFLAGS} -mtune=generic ${D
 
 ${CC} -shared -o ${CONFIG}/bin/mod_cgi.so ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.o ${LIBS} -lappweb -lhttp -lmpr -lpcre
 
-${CC} -c -o ${CONFIG}/obj/auth.o -Wall -fPIC ${LDFLAGS} -mtune=generic ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
+${CC} -c -o ${CONFIG}/obj/authpass.o -Wall -fPIC ${LDFLAGS} -mtune=generic ${DFLAGS} -I${CONFIG}/inc src/utils/authpass.c
 
-${CC} -o ${CONFIG}/bin/auth ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/auth.o ${LIBS} -lmpr ${LDFLAGS}
+${CC} -o ${CONFIG}/bin/authpass ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/authpass.o ${LIBS} -lappweb -lhttp -lmpr -lpcre ${LDFLAGS}
 
 ${CC} -c -o ${CONFIG}/obj/cgiProgram.o -Wall -fPIC ${LDFLAGS} -mtune=generic ${DFLAGS} -I${CONFIG}/inc src/utils/cgiProgram.c
 

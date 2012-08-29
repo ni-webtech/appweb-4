@@ -32,7 +32,7 @@ all: prep \
         $(CONFIG)/bin/esp-www \
         $(CONFIG)/bin/esp-appweb.conf \
         $(CONFIG)/bin/mod_cgi.so \
-        $(CONFIG)/bin/auth \
+        $(CONFIG)/bin/authpass \
         $(CONFIG)/bin/cgiProgram \
         $(CONFIG)/bin/setConfig \
         $(CONFIG)/bin/appweb \
@@ -69,7 +69,7 @@ clean:
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/esp-appweb.conf
 	rm -rf $(CONFIG)/bin/mod_cgi.so
-	rm -rf $(CONFIG)/bin/auth
+	rm -rf $(CONFIG)/bin/authpass
 	rm -rf $(CONFIG)/bin/cgiProgram
 	rm -rf $(CONFIG)/bin/setConfig
 	rm -rf $(CONFIG)/bin/appweb
@@ -108,7 +108,7 @@ clean:
 	rm -rf $(CONFIG)/obj/phpHandler.o
 	rm -rf $(CONFIG)/obj/proxyHandler.o
 	rm -rf $(CONFIG)/obj/sslModule.o
-	rm -rf $(CONFIG)/obj/auth.o
+	rm -rf $(CONFIG)/obj/authpass.o
 	rm -rf $(CONFIG)/obj/cgiProgram.o
 	rm -rf $(CONFIG)/obj/setConfig.o
 	rm -rf $(CONFIG)/obj/appweb.o
@@ -397,15 +397,15 @@ $(CONFIG)/bin/mod_cgi.so:  \
         $(CONFIG)/obj/cgiHandler.o
 	$(CC) -shared -o $(CONFIG)/bin/mod_cgi.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/cgiHandler.o $(LIBS) -lappweb -lhttp -lmpr -lpcre
 
-$(CONFIG)/obj/auth.o: \
-        src/utils/auth.c \
+$(CONFIG)/obj/authpass.o: \
+        src/utils/authpass.c \
         $(CONFIG)/inc/bit.h
-	$(CC) -c -o $(CONFIG)/obj/auth.o -Wall -fPIC $(LDFLAGS) -mtune=generic $(DFLAGS) -I$(CONFIG)/inc src/utils/auth.c
+	$(CC) -c -o $(CONFIG)/obj/authpass.o -Wall -fPIC $(LDFLAGS) -mtune=generic $(DFLAGS) -I$(CONFIG)/inc src/utils/authpass.c
 
-$(CONFIG)/bin/auth:  \
-        $(CONFIG)/bin/libmpr.so \
-        $(CONFIG)/obj/auth.o
-	$(CC) -o $(CONFIG)/bin/auth $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/auth.o $(LIBS) -lmpr $(LDFLAGS)
+$(CONFIG)/bin/authpass:  \
+        $(CONFIG)/bin/libappweb.so \
+        $(CONFIG)/obj/authpass.o
+	$(CC) -o $(CONFIG)/bin/authpass $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/authpass.o $(LIBS) -lappweb -lhttp -lmpr -lpcre $(LDFLAGS)
 
 $(CONFIG)/obj/cgiProgram.o: \
         src/utils/cgiProgram.c \

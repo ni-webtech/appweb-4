@@ -144,9 +144,9 @@ cp -r src/esp/esp-appweb.conf ${CONFIG}/bin/esp-appweb.conf
 
 "${LD}" -dll -out:${CONFIG}/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_cgi.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib
 
-"${CC}" -c -Fo${CONFIG}/obj/auth.obj -Fd${CONFIG}/obj/auth.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/auth.c
+"${CC}" -c -Fo${CONFIG}/obj/authpass.obj -Fd${CONFIG}/obj/authpass.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/authpass.c
 
-"${LD}" -out:${CONFIG}/bin/auth.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/auth.obj ${LIBS} libmpr.lib
+"${LD}" -out:${CONFIG}/bin/authpass.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/authpass.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib
 
 "${CC}" -c -Fo${CONFIG}/obj/cgiProgram.obj -Fd${CONFIG}/obj/cgiProgram.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/utils/cgiProgram.c
 

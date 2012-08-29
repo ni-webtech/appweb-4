@@ -7,11 +7,10 @@
  */
 
 /* Settings */
-#define BIT_AUTH "file"
+#define BIT__MINIMAL "doxygen,dsi,ejs,man,man2html,pmaker,ssl,ejscript,php,matrixssl,openssl"
 #define BIT_BUILD_NUMBER "0"
 #define BIT_COMPANY "Embedthis"
 #define BIT_DEPTH 1
-#define BIT_DIGEST 1
 #define BIT_HAS_DYN_LOAD 1
 #define BIT_HAS_LIB_EDIT 0
 #define BIT_HAS_MMU 1
@@ -19,7 +18,7 @@
 #define BIT_HTTP_PORT 80
 #define BIT_MANAGER "appman"
 #define BIT_MDB 1
-#define BIT_MINIMAL "doxygen,dsi,ejs,man,man2html,pmaker,ssl,ejscript,php,matrixssl,openssl"
+#define BIT_MINIMAL "doxygen,dsi,ejs,man,man2html,pmaker,ejscript,php,matrixssl"
 #define BIT_OPTIONAL "cgi,dir,doxygen,dsi,ejs,ejscript,esp,man,man2html,openssl,matrixssl,pmaker,php,sqlite,ssl,utest,zip"
 #define BIT_PACKS "bits/packs"
 #define BIT_PAM 1
@@ -27,7 +26,6 @@
 #define BIT_PRODUCT "appweb"
 #define BIT_REQUIRED "winsdk,compiler,link,dumpbin,rc,pcre"
 #define BIT_SDB 0
-#define BIT_SESSIONS 1
 #define BIT_SSL_PORT 443
 #define BIT_SYNC "http,mpr,pcre,sqlite"
 #define BIT_TITLE "Embedthis Appweb"
