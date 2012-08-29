@@ -1,8 +1,8 @@
 .TH AUTH "1" "February 2012" "auth" "User Commands"
 .SH NAME
-auth \- Create and manage passwords
+authpass \- Create and manage passwords
 .SH SYNOPSIS
-.B auth [\fI-c\fR]
+.B authpass [\fI-c\fR]
 [\fI-p password\fR] 
 passwordFile realm userName
 .SH OPTIONS
@@ -14,8 +14,8 @@ Specifies a password to use to for the user.
 Create the specified password file
 .PP
 .SH DESCRIPTION
-The auth program is used to create user passwords in a nominated password file. Unlike Apache, 
-Appweb uses the same authorization file andeformat for Digest and Basic authentication. This simplifies administration.
+The authpass program is used to create user passwords in a nominated password configuration file.
+Appweb uses the same authorization file andeformat for Basic, Digest and Post authentication stores. This simplifies administration.
 .SH "REPORTING BUGS"
 Report bugs to <dev@embedthis.com>.
 .SH COPYRIGHT

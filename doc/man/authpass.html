@@ -2,10 +2,10 @@
 AUTH(1)                          User Commands                         AUTH(1)
 
 <B>NAME</B>
-       auth - Create and manage passwords
+       authpass - Create and manage passwords
 
 <B>SYNOPSIS</B>
-       <B>auth [</B><I>-c</I>] [<I>-p password</I>] passwordFile realm userName
+       <B>authpass [</B><I>-c</I>] [<I>-p password</I>] passwordFile realm userName
 
 <B>OPTIONS</B>
        <B>-p password</B>
@@ -14,10 +14,10 @@ AUTH(1)                          User Commands                         AUTH(1)
        <B>-c     </B>Create the specified password file
 
 <B>DESCRIPTION</B>
-       The  auth program is used to create user passwords in a nominated pass-
-       word file. Unlike Apache, Appweb uses the same authorization file ande-
-       format for Digest and Basic authentication. This simplifies administra-
-       tion.
+       The  authpass  program  is used to create user passwords in a nominated
+       password configuration file.  Appweb uses the same  authorization  file
+       andeformat  for Basic, Digest and Post authentication stores. This sim-
+       plifies administration.
 
 <B>REPORTING BUGS</B>
        Report bugs to &ltdev@embedthis.com&gt.

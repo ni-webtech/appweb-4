@@ -2340,6 +2340,7 @@ extern int httpAddAuthStore(Http *http, cchar *name, HttpVerifyUser verifyUser);
 typedef struct HttpUser {
     char            *name;                  /**< User name */
     char            *password;              /**< User password */
+    char            *roles;                 /**< Original list of roles */
     MprHash         *abilities;             /**< User abilities */
 } HttpUser;
 

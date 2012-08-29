@@ -8,7 +8,6 @@
 
 /* Settings */
 #define BIT__MINIMAL "doxygen,dsi,ejs,man,man2html,pmaker,ssl,ejscript,php,matrixssl,openssl"
-#define BIT_AUTH "file"
 #define BIT_BUILD_NUMBER "0"
 #define BIT_COMPANY "Embedthis"
 #define BIT_DEPTH 1

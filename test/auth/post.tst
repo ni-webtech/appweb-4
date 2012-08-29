@@ -8,7 +8,7 @@ const HTTPS = App.config.uris.https || "127.0.0.1:4110"
 let http: Http = new Http
 
 //  Will be denied
-http.setCredentials("anybody", "wrong password")
+// http.setCredentials("anybody", "wrong password")
 http.get(HTTP + "/auth/post/index.html")
 assert(http.status == 302)
 let location = http.header('location')
@@ -37,6 +37,22 @@ http.reset()
 http.setCookie(cookie)
 http.get("https://" + HTTPS + "/auth/post/index.html")
 assert(http.status == 200)
+
+//  Now log out. Will be redirected to the login page.
+http.reset()
+http.setCookie(cookie)
+http.get("https://" + HTTPS + "/auth/post/logout")
+assert(http.status == 302)
+let location = http.header('location')
+assert(location.contains('https'))
+assert(location.contains('login.esp'))
+
+//  Should fail to access index.html and get the login page again.
+http.get(HTTP + "/auth/post/index.html")
+assert(http.status == 302)
+let location = http.header('location')
+assert(location.contains('https'))
+assert(location.contains('login.esp'))
 
 http.close()
 

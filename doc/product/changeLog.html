@@ -65,6 +65,19 @@
         
             <a id="r4.1.0"></a>
             <h2 class="section">Changes in 4.1.0</h2>
+            <h2>Major Features</h2>
+            <ul>
+                <li>Enhanced role-based authentication management for granular access control.</li>
+                <li>Web based form authentication and custom authentication support</li>
+                <li>Customizable back-end password stores.</li>
+                <li>auth/httpPassword program renamed to authpass for clarity</li>
+                <li>AuthMethod renamed to AuthStore for clarity (old directive preserved for compatibility)</li>
+                <li>AuthName renamed to AuthRealm for clarity (old directive preserved for compatibility)</li>
+                <li>Require ability "token" directive to specify required route abilities for access</li>
+                <li>Session state management and automatic cookie management. Optimizes authentication via session
+                storage of credentials. </li> 
+            </ul>
+
             <h3>Minor Features</h3>
             <ul>
                 <li>Added ESP migrations</li>

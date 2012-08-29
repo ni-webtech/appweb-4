@@ -40,7 +40,6 @@ Bit.load({
         mdb: true,
         sdb: false,
         manager: 'appman',
-        auth: 'file',
         pam: true,
         packs: [ 'bits/packs' ]
         /* Must build locally to build tools */

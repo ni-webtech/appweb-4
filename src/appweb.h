@@ -222,7 +222,7 @@ extern int maSetPlatform(cchar *platform);
     @defgroup MaServer MaServer
     @see MaServer maAddEndpoint maConfigureServer maCreateServer maParseConfig maRunSimpleWebServer 
         maRunWebServer maServiceWebServer maSetServerAddress maSetServerHome maStartServer maStopServer 
-        maValidateServer 
+        maValidateServer maWriteAuthFile
  */
 typedef struct MaServer {
     char            *name;                  /**< Unique name for this server */
@@ -269,6 +269,9 @@ extern int maConfigureServer(MaServer *server, cchar *configFile, cchar *home, c
     @ingroup MaServer
  */
 extern MaServer *maCreateServer(MaAppweb *appweb, cchar *name);
+
+//  MOB
+HttpAuth *maGetDefaultAuth(MaServer *server);
 
 /**
     Parse an Appweb configuration file
@@ -345,6 +348,19 @@ extern void maStopServer(MaServer *server);
     @ingroup Appweb
  */
 extern bool maValidateServer(MaServer *server);
+
+/**
+    Save the authorization configuration to a file
+    AuthFile schema:
+        User name password abilities...
+        Role name abilities...
+    @param auth Auth object allocated by #httpCreateAuth.
+    @param path Path name of file
+    @return "Zero" if successful, otherwise a negative MPR error code
+    @ingroup HttpAuth
+    @internal 
+ */
+extern int maWriteAuthFile(HttpAuth *auth, char *path);
 
 /******************************************************************************/
 /*

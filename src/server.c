@@ -148,6 +148,8 @@ static void manageServer(MaServer *server, int flags)
 MaServer *maCreateServer(MaAppweb *appweb, cchar *name)
 {
     MaServer    *server;
+    HttpHost    *host;
+    HttpRoute   *route;
 
     mprAssert(appweb);
 
@@ -162,6 +164,15 @@ MaServer *maCreateServer(MaAppweb *appweb, cchar *name)
     server->limits = httpCreateLimits(1);
     server->appweb = appweb;
     server->http = appweb->http;
+
+    server->defaultHost = host = httpCreateHost(NULL);
+    if (!httpGetDefaultHost()) {
+        httpSetDefaultHost(host);
+    }
+    route = httpCreateRoute(host);
+    httpSetHostDefaultRoute(host, route);
+    route->limits = server->limits;
+
     maAddServer(appweb, server);
     if (appweb->defaultServer == 0) {
         maSetDefaultServer(appweb, server);
@@ -538,6 +549,12 @@ int maLoadModule(MaAppweb *appweb, cchar *name, cchar *libname)
         return MPR_ERR_CANT_CREATE;
     }
     return 0;
+}
+
+ 
+HttpAuth *maGetDefaultAuth(MaServer *server)
+{
+    return server->defaultHost->defaultRoute->auth;
 }
 
 

@@ -54,7 +54,7 @@
                 <li><a href="#limitUpload">LimitUpload</a></li>
                 <li><a href="#limitUri">LimitUri</a></li>
                 <li><a href="#limitWorkers">LimitWorkers</a></li>
-                <li><a href="#startWorkers">StartWorkers</a></li>
+                <li><a href="#minWorkers">MinWorkers</a></li>
                 <li><a href="#threadStack">ThreadStack</a></li>
             </ul>
             <h1>See Also</h1>
@@ -732,8 +732,8 @@
             </table>
             
             
-            <a id="startWorkers"></a>
-            <h2>StartWorkers</h2>
+            <a id="minWorkers"></a>
+            <h2>MinWorkers</h2>
             <table class="directive" title="directive">
                 <tbody>
                     <tr>
@@ -742,7 +742,7 @@
                     </tr>
                     <tr>
                         <td class="pivot">Synopsis</td>
-                        <td>StartWorkers number</td>
+                        <td>MinWorkers number</td>
                     </tr>
                     <tr>
                         <td class="pivot">Context</td>
@@ -750,13 +750,13 @@
                     </tr>
                     <tr>
                         <td class="pivot">Example</td>
-                        <td>StartWorkers 100</td>
+                        <td>MinWorkers 100</td>
                     </tr>
                     <tr>
                         <td class="pivot">Notes</td>
                         <td>
-                            <p>The StartWorkers directive will pre-allocate the specified number of worker threads on startup
-                            and then ensure that the worker pool always has at least this number of workers.</p>
+                            <p>The MinWorkers directive will pre-allocate the specified number of worker threads on startup
+                            and then ensure that the worker pool always has at least this minimum number of workers.</p>
                             <p>Appweb will automatically adjust the number of workers between the minimum specified
                             by this directive and the maximum specified by the WorkerLimit directive or via the Appweb
                             command line. Every ten minutes, Appweb will prune workers that have been idle for five
@@ -838,7 +838,7 @@
                             "../starting.html#appwebOptions">Appweb command line</a>, the command line value will take
                             precedence.</p>
                             <p>Appweb will automatically adjust the number of pool threads between the minimum specified
-                            by the StartWorkers directive and the maximum specified by this directive. Appweb will
+                            by the MinWorkers directive and the maximum specified by this directive. Appweb will
                             prune idle threads to reduce resource consumption as required.</p>
                         </td>
                     </tr>

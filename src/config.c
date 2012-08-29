@@ -54,6 +54,7 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
 
     mprLog(2, "Config File %s", path);
 
+#if UNUSED
     /*
         Create top level host and route
         NOTE: the route is not added to the host until the finalization below
@@ -67,8 +68,12 @@ int maParseConfig(MaServer *server, cchar *path, int flags)
 
     route = httpCreateRoute(host);
     httpSetHostDefaultRoute(host, route);
-    httpSetRouteVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, "bin"));
     route->limits = server->limits;
+#endif
+    host = server->defaultHost;
+    route = host->defaultRoute;
+
+    httpSetRouteVar(route, "LIBDIR", mprJoinPath(server->appweb->platformDir, "bin"));
 
     state = createState(server, host, route);
     state->flags = flags;
@@ -1976,7 +1981,6 @@ bool maValidateServer(MaServer *server)
         }
     }
     for (nextHost = 0; (host = mprGetNextItem(http->hosts, &nextHost)) != 0; ) {
-        mprAssert(host->name && host->name);
         if (host->home == 0) {
             httpSetHostHome(host, defaultHost->home);
         }
@@ -2331,6 +2335,43 @@ static char *gettok(char *s, char **tok)
     }
     *tok = etok;
     return s;
+}
+
+
+int maWriteAuthFile(HttpAuth *auth, char *path)
+{
+    MprFile         *file;
+    MprKey          *kp, *ap;
+    HttpRole        *role;
+    HttpUser        *user;
+    char            *tempFile;
+
+    tempFile = mprGetTempPath(NULL);
+    if ((file = mprOpenFile(tempFile, O_CREAT | O_TRUNC | O_WRONLY | O_TEXT, 0444)) == 0) {
+        mprError("Can't open %s", tempFile);
+        return MPR_ERR_CANT_OPEN;
+    }
+    mprWriteFileFmt(file, "#\n#   %s - Authorization data\n#\n\n", mprGetPathBase(path));
+
+    for (ITERATE_KEY_DATA(auth->roles, kp, role)) {
+        mprWriteFileFmt(file, "Role %s", kp->key);
+        for (ITERATE_KEYS(role->abilities, ap)) {
+            mprWriteFileFmt(file, " %s", ap->key);
+        }
+        mprPutFileChar(file, '\n');
+    }
+    mprPutFileChar(file, '\n');
+    for (ITERATE_KEY_DATA(auth->users, kp, user)) {
+        mprWriteFileFmt(file, "User %s %s %s", user->name, user->password, user->roles);
+        mprPutFileChar(file, '\n');
+    }
+    mprCloseFile(file);
+    unlink(path);
+    if (rename(tempFile, path) < 0) {
+        mprError("Can't create new %s", path);
+        return MPR_ERR_CANT_WRITE;
+    }
+    return 0;
 }
 
 

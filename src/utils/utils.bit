@@ -5,10 +5,10 @@
 Bit.load({
 
     targets: {
-        auth: {
+        authpass: {
             type: 'exe',
-            sources: [ 'auth.c' ],
-            depends: [ 'libmpr' ],
+            sources: [ 'authpass.c' ],
+            depends: [ 'libappweb' ],
             platforms: [ 'local' ],
         },
 

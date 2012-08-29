@@ -25,5 +25,12 @@ Bit.load({
             depends: [ 'libhttp', ],
             platforms: [ 'local' ],
         },
+
+        authpass: {
+            type: 'exe',
+            sources: [ 'authpass.c' ],
+            depends: [ 'libhttp', ],
+            platforms: [ 'local' ],
+        },
 	},
 })

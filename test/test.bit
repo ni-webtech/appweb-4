@@ -117,6 +117,20 @@ Bit.load({
             ",
         },
 
+        'auth.conf': {
+            action: "
+                let path = Path('new.conf')
+                trace('Generate', 'Authorization file: ' + path)
+                path.write('#\n#   ' + path + ' - Authorization roles and users\n#\n\n')
+                path.write('Role user view\nRole administrator view\nRole executive manage direct\n\n')
+                run('authpass -p pass4 ' + path + ' example.com julie user')
+                run('authpass -p pass3 ' + path + ' example.com peter user')
+                run('authpass -p pass2 ' + path + ' example.com mary user executive')
+                run('authpass -p pass1 ' + path + ' example.com joshua user administrator purchase')
+                
+            ",
+        },
+
         'clean-test': {
             type: 'clean',                                                                                 
             action: "                                                                                      

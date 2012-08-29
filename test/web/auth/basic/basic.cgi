@@ -1,5 +1,7 @@
-#!/bin/sh
+#!/Users/mob/git/ejs/macosx-x64-debug/bin/ejs
+print("HTTP/1.0 200 OK
+Content-Type: text/plain
 
-echo Content-Type: text/plain
-echo
-/usr/bin/env
+")
+for (let [key,value] in App.env) print(key + "=" + value)
+print()
