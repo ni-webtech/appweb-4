@@ -4470,7 +4470,9 @@ static void manageHttp(Http *http, int flags)
         mprMark(http->forkData);
         mprMark(http->context);
         mprMark(http->currentDate);
+#if UNUSED
         mprMark(http->expiresDate);
+#endif
         mprMark(http->secret);
         mprMark(http->defaultClientHost);
         mprMark(http->protocol);
@@ -4688,19 +4690,6 @@ void httpSetListenCallback(Http *http, HttpListenCallback fn)
 
 
 /*  
-    Start the http timer. This may create multiple timers -- no worry. httpAddConn does its best to only schedule one.
-    Must be called locked.
- */
-static void startTimer(Http *http)
-{
-    if (!http->timer) {
-        http->timer = mprCreateTimerEvent(NULL, "httpTimer", HTTP_TIMER_PERIOD, httpTimer, http, 
-            MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
-    }
-}
-
-
-/*  
     The http timer does maintenance activities and will fire per second while there are active requests.
     This is run in both servers and clients.
     NOTE: Because we lock the http here, connections cannot be deleted while we are modifying the list.
@@ -4858,21 +4847,23 @@ static bool isIdle()
 
 void httpAddConn(Http *http, HttpConn *conn)
 {
-    lock(http);
-    mprAddItem(http->connections, conn);
     conn->started = http->now;
+    mprAddItem(http->connections, conn);
+
+    lock(http);
     conn->seqno = http->connCount++;
     updateCurrentDate(http);
-    startTimer(http);
+    if (!http->timer) {
+        http->timer = mprCreateTimerEvent(NULL, "httpTimer", HTTP_TIMER_PERIOD, httpTimer, http, 
+            MPR_EVENT_CONTINUOUS | MPR_EVENT_QUICK);
+    }
     unlock(http);
 }
 
 
 void httpRemoveConn(Http *http, HttpConn *conn)
 {
-    lock(http);
     mprRemoveItem(http->connections, conn);
-    unlock(http);
 }
 
 
@@ -4985,16 +4976,17 @@ void httpSetProxy(Http *http, cchar *host, int port)
 
 static void updateCurrentDate(Http *http)
 {
-    static MprTime  recalcExpires = 0;
-
     http->now = mprGetTime();
     if (http->now > (http->currentTime + MPR_TICKS_PER_SEC - 1)) {
         http->currentTime = http->now;
         http->currentDate = httpGetDateString(NULL);
+#if UNUSED
+    static MprTime  recalcExpires = 0;
         if (http->expiresDate == 0 || recalcExpires < (http->now / (60 * 1000))) {
             http->expiresDate = mprFormatUniversalTime(HTTP_DATE_FORMAT, http->now + (86400 * 1000));
             recalcExpires = http->now / (60 * 1000);
         }
+#endif
     }
 }
 

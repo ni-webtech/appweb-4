@@ -294,7 +294,9 @@ typedef struct Http {
     void            *context;               /**< Embedding context */
     MprTime         currentTime;            /**< When currentDate was last calculated */
     char            *currentDate;           /**< Date string for HTTP response headers */
+#if UNUSED
     char            *expiresDate;           /**< Convenient expiry date (1 day in advance) */
+#endif
     char            *secret;                /**< Random bytes for authentication */
 
     char            *defaultClientHost;     /**< Default ip address */

@@ -1718,8 +1718,8 @@ typedef struct MprSpin {
 #undef unlock
 #undef spinlock
 #undef spinunlock
-#define lock(arg)       if (arg) mprLock((arg)->mutex)
-#define unlock(arg)     if (arg) mprUnlock((arg)->mutex)
+#define lock(arg)       if (arg && (arg)->mutex) mprLock((arg)->mutex)
+#define unlock(arg)     if (arg && (arg)->mutex) mprUnlock((arg)->mutex)
 #define spinlock(arg)   if (arg) mprSpinLock((arg)->spin)
 #define spinunlock(arg) if (arg) mprSpinUnlock((arg)->spin)
 
@@ -4048,6 +4048,7 @@ extern int mprGetTimeZoneOffset(MprTime when);
  */
 #define MPR_OBJ_LIST            0x1     /**< Object is a hash */
 #define MPR_LIST_STATIC_VALUES  0x20    /**< Flag for #mprCreateList when values are permanent */
+#define MPR_LIST_OWN            0x40    /**< For own use. Not thread safe */
 
 /**
     List data structure.
@@ -4061,8 +4062,7 @@ extern int mprGetTimeZoneOffset(MprTime when);
  */
 typedef struct MprList {
     int         flags;                  /**< Control flags */
-    //  MOB - rename size for compat with MprHash
-    int         capacity;               /**< Current list size */ 
+    int         size;                   /**< Current list capacity */ 
     int         length;                 /**< Current length of the list contents */
     int         maxSize;                /**< Maximum capacity */
     MprMutex    *mutex;                 /**< Multithread lock */
@@ -4142,7 +4142,7 @@ extern int mprCopyListContents(MprList *dest, MprList *src);
         required when items are added to the list.
     @param size Initial capacity of the list.
     @param flags Control flags. Possible values are: MPR_LIST_STATIC_VALUES to indicate list items are static
-        and should not be marked for GC.
+        and should not be marked for GC. MPR_LIST_OWN to create an optimized list for private use that is not thread-safe.
     @return Returns a pointer to the list. 
     @ingroup MprList
  */
@@ -4217,9 +4217,11 @@ extern void *mprGetPrevItem(MprList *list, int *lastIndex);
     @description If a list is statically declared inside another structure, mprInitList can be used to 
         initialize it before use.
     @param list Reference to the MprList struct.
+    @param flags Control flags. Possible values are: MPR_LIST_STATIC_VALUES to indicate list items are static
+        and should not be marked for GC.  MPR_LIST_OWN to create an optimized list for private use that is not thread-safe.
     @ingroup MprList
  */
-extern void mprInitList(MprList *list);
+extern void mprInitList(MprList *list, int flags);
 
 /**
     Insert an item into a list at a specific position
@@ -4647,6 +4649,7 @@ typedef uint (*MprHashProc)(cvoid *name, ssize len);
 #define MPR_HASH_STATIC_VALUES  0x80    /**< Values are permanent - don't mark */
 #define MPR_HASH_LIST           0x100   /**< Hash keys are numeric indicies */
 #define MPR_HASH_UNIQUE         0x200   /**< Add to existing will fail */
+#define MPR_HASH_OWN            0x400   /**< For own use. Not thread safe */
 #define MPR_HASH_STATIC_ALL     (MPR_HASH_STATIC_KEYS | MPR_HASH_STATIC_VALUES)
 
 /**
@@ -4720,6 +4723,7 @@ extern MprHash *mprCloneHash(MprHash *table);
     @param flags Table control flags. Use MPR_HASH_CASELESS for case insensitive comparisions, MPR_HASH_UNICODE
         if the hash keys are unicode strings, MPR_HASH_STATIC_KEYS if the keys are permanent and should not be
         managed for Garbage collection, and MPR_HASH_STATIC_VALUES if the values are permanent.
+        MPR_HASH_OWN to create an optimized list for private use that is not thread-safe.
     @return Returns a pointer to the allocated symbol table.
     @ingroup MprHash
  */
