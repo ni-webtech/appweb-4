@@ -91,6 +91,9 @@ Bit.load({
                 trace('Copy', 'ESP JS files')
                 cp('../src/esp/www/files/static/js', 'web/js')
             ",
+            'generate-sh': "
+                cp -r ../src/esp/www/files/static/js 'web/js'
+            ",
         },
 
         test: {

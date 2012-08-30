@@ -12,16 +12,23 @@
     <!--[if IE]>
     <link href="../iehacks.css" rel="stylesheet" type="text/css" />
     <![endif]-->
-    <link href="http://www.google.com/cse/style/look/default.css" type="text/css" rel="stylesheet" />
 </head>
 <body>
     <div class="top">
         <a class="logo" href="http://appwebserver.org/">&nbsp;</a>
         <div class="topRight">
              <div class="search">
-                <div id="cse-search-form"></div>
-                <div class="version"><!--TITLE-->Embedthis Appweb 4.0.0</div>
-            </div>
+                 <form method="get" action="http://www.google.com/search" title="Search embedthis.com">
+                     <p>
+                        <label title="Search">Search</label> 
+                        <input type="text" id="q" name="q" size="15" maxlength="255" />
+                        <input type="submit" id="submit" value="Go" /> 
+                        <input type="hidden" name="domains" value="embedthis.com" /> 
+                        <input type="hidden" name="sitesearch" value="embedthis.com" />
+                    </p>
+                 </form>
+              </div>
+            <!--TITLE-->Embedthis Appweb 4.0.0
         </div>
         <div class="crumbs">
             <a href="../index.html">Home</a>
@@ -35,15 +42,17 @@
             
             
 <!-- BeginDsi "dsi/see.html" -->
+            <!--
 				<h1>See Also</h1>
 				<ul class="nav">
 					<li><a href="../ref/appweb/index.html">Programmers Reference</a></li>
 					<li><a href="../api/native.html">Native APIs</a></li>
 				</ul>
+            -->
 <!-- EndDsi -->
             <h2>Quick Nav</h2>
             <ul>
-                <li><a href="#Components">Components</a></li>
+                <li><a href="#Modules">Modules</a></li>
                 <li><a href="#Typedefs">Typedefs</a></li>
                 <li><a href="#Functions">Functions</a></li>
                 <li><a href="#Defines">Defines</a></li>
@@ -13714,9 +13723,12 @@ Configured minimum.
           '000262706376373952077:1hs0lhenihk');
         customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
         var options = new google.search.DrawOptions();
-        options.enableSearchboxOnly("http://appwebserver.org/search.html");
+        options.enableSearchboxOnly("http://embedthis.com/search.html");
         customSearchControl.draw('cse-search-form', options);
       }, true);
     </script>
+</body>
+</html>
+<!-- EndDsi -->
 </body>
 </html>

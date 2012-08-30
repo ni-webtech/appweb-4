@@ -40,8 +40,8 @@ if (path) {
             dir.rename(ejs)
             tgz.remove()
             tar.remove()
-            for each (n in ['Makefile', 'bit.h', 'deps.c', 'ejsmod.c', 'pcre.c', 'pcre.h', 'product.bit', 
-                    'sqlite3.c', 'sqlite3.h', 'start.bit']) {
+            for each (n in ['Makefile', 'bit.h', 'deps.c', 'ejsmod.c', 'pcre.c', 'pcre.h', 'sqlite3.c', 
+                    'sqlite3.h', 'start.bit']) {
                 ejs.join(n).remove()
             }
             trace('Done', 'Ejscript distribution')

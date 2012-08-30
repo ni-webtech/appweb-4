@@ -16,7 +16,7 @@ Bit.load({
             enable: 'bit.packs.ejscript.enable',
             type: 'lib',
             sources: [ 'ejsHandler.c' ],
-            libraries: [ 'libejs' ],
+            depends: [ 'libejs' ],
         },
         mod_php: {
             enable: 'bit.packs.php.enable',
