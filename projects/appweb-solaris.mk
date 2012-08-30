@@ -31,6 +31,10 @@ all: prep \
         $(CONFIG)/bin/esp.conf \
         $(CONFIG)/bin/esp-www \
         $(CONFIG)/bin/esp-appweb.conf \
+        $(CONFIG)/bin/libejs.so \
+        $(CONFIG)/bin/ejs \
+        $(CONFIG)/bin/ejsc \
+        $(CONFIG)/bin/ejs.mod \
         $(CONFIG)/bin/mod_cgi.so \
         $(CONFIG)/bin/authpass \
         $(CONFIG)/bin/cgiProgram \
@@ -40,7 +44,8 @@ all: prep \
         test/cgi-bin/testScript \
         test/web/caching/cache.cgi \
         test/web/auth/basic/basic.cgi \
-        test/cgi-bin/cgiProgram
+        test/cgi-bin/cgiProgram \
+        test/web/js
 
 .PHONY: prep
 
@@ -68,6 +73,10 @@ clean:
 	rm -rf $(CONFIG)/bin/esp.conf
 	rm -rf $(CONFIG)/bin/esp-www
 	rm -rf $(CONFIG)/bin/esp-appweb.conf
+	rm -rf $(CONFIG)/bin/libejs.so
+	rm -rf $(CONFIG)/bin/ejs
+	rm -rf $(CONFIG)/bin/ejsc
+	rm -rf $(CONFIG)/bin/ejs.mod
 	rm -rf $(CONFIG)/bin/mod_cgi.so
 	rm -rf $(CONFIG)/bin/authpass
 	rm -rf $(CONFIG)/bin/cgiProgram
@@ -78,6 +87,7 @@ clean:
 	rm -rf test/web/caching/cache.cgi
 	rm -rf test/web/auth/basic/basic.cgi
 	rm -rf test/cgi-bin/cgiProgram
+	rm -rf test/web/js
 	rm -rf $(CONFIG)/obj/mprLib.o
 	rm -rf $(CONFIG)/obj/mprSsl.o
 	rm -rf $(CONFIG)/obj/manager.o
@@ -103,6 +113,9 @@ clean:
 	rm -rf $(CONFIG)/obj/mdb.o
 	rm -rf $(CONFIG)/obj/sdb.o
 	rm -rf $(CONFIG)/obj/esp.o
+	rm -rf $(CONFIG)/obj/ejsLib.o
+	rm -rf $(CONFIG)/obj/ejs.o
+	rm -rf $(CONFIG)/obj/ejsc.o
 	rm -rf $(CONFIG)/obj/cgiHandler.o
 	rm -rf $(CONFIG)/obj/ejsHandler.o
 	rm -rf $(CONFIG)/obj/phpHandler.o
@@ -387,6 +400,59 @@ $(CONFIG)/bin/esp-appweb.conf:
 	rm -fr $(CONFIG)/bin/esp-appweb.conf
 	cp -r src/esp/esp-appweb.conf $(CONFIG)/bin/esp-appweb.conf
 
+$(CONFIG)/inc/ejs.h: 
+	rm -fr $(CONFIG)/inc/ejs.h
+	cp -r src/deps/ejs/ejs.h $(CONFIG)/inc/ejs.h
+
+$(CONFIG)/inc/ejs.slots.h: 
+	rm -fr $(CONFIG)/inc/ejs.slots.h
+	cp -r src/deps/ejs/ejs.slots.h $(CONFIG)/inc/ejs.slots.h
+
+$(CONFIG)/inc/ejsByteGoto.h: 
+	rm -fr $(CONFIG)/inc/ejsByteGoto.h
+	cp -r src/deps/ejs/ejsByteGoto.h $(CONFIG)/inc/ejsByteGoto.h
+
+$(CONFIG)/obj/ejsLib.o: \
+        src/deps/ejs/ejsLib.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/ejsLib.o -Wall -fPIC $(LDFLAGS) -mtune=generic $(DFLAGS) -I$(CONFIG)/inc src/deps/ejs/ejsLib.c
+
+$(CONFIG)/bin/libejs.so:  \
+        $(CONFIG)/bin/libhttp.so \
+        $(CONFIG)/bin/libsqlite3.so \
+        $(CONFIG)/bin/libpcre.so \
+        $(CONFIG)/inc/ejs.h \
+        $(CONFIG)/inc/ejs.slots.h \
+        $(CONFIG)/inc/ejsByteGoto.h \
+        $(CONFIG)/obj/ejsLib.o
+	$(CC) -shared -o $(CONFIG)/bin/libejs.so $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/ejsLib.o $(LIBS) -lhttp -lmpr -lpcre -lsqlite3 -lpcre
+
+$(CONFIG)/obj/ejs.o: \
+        src/deps/ejs/ejs.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/ejs.o -Wall -fPIC $(LDFLAGS) -mtune=generic $(DFLAGS) -I$(CONFIG)/inc src/deps/ejs/ejs.c
+
+$(CONFIG)/bin/ejs:  \
+        $(CONFIG)/bin/libejs.so \
+        $(CONFIG)/obj/ejs.o
+	$(CC) -o $(CONFIG)/bin/ejs $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/ejs.o $(LIBS) -lejs -lhttp -lmpr -lpcre -lsqlite3 $(LDFLAGS)
+
+$(CONFIG)/obj/ejsc.o: \
+        src/deps/ejs/ejsc.c \
+        $(CONFIG)/inc/bit.h
+	$(CC) -c -o $(CONFIG)/obj/ejsc.o -Wall -fPIC $(LDFLAGS) -mtune=generic $(DFLAGS) -I$(CONFIG)/inc src/deps/ejs/ejsc.c
+
+$(CONFIG)/bin/ejsc:  \
+        $(CONFIG)/bin/libejs.so \
+        $(CONFIG)/obj/ejsc.o
+	$(CC) -o $(CONFIG)/bin/ejsc $(LDFLAGS) $(LIBPATHS) $(CONFIG)/obj/ejsc.o $(LIBS) -lejs -lhttp -lmpr -lpcre -lsqlite3 $(LDFLAGS)
+
+$(CONFIG)/bin/ejs.mod:  \
+        $(CONFIG)/bin/ejsc
+	cd src/deps/ejs >/dev/null ;\
+		../../../$(CONFIG)/bin/ejsc --out ../../../$(CONFIG)/bin/ejs.mod --optimize 9 --bind --require null ejs.es ;\
+		cd - >/dev/null 
+
 $(CONFIG)/obj/cgiHandler.o: \
         src/modules/cgiHandler.c \
         $(CONFIG)/inc/bit.h
@@ -496,5 +562,10 @@ test/cgi-bin/cgiProgram:  \
 	cp ../$(CONFIG)/bin/cgiProgram 'cgi-bin/cgi Program' ;\
 	cp ../$(CONFIG)/bin/cgiProgram web/cgiProgram.cgi ;\
 	chmod +x cgi-bin/* web/cgiProgram.cgi ;\
+		cd - >/dev/null 
+
+test/web/js: 
+	cd test >/dev/null ;\
+		cp -r ../src/esp/www/files/static/js 'web/js' ;\
 		cd - >/dev/null 
 

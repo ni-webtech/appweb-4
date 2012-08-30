@@ -140,6 +140,31 @@ cp -r src/esp/www ${CONFIG}/bin/esp-www
 rm -rf ${CONFIG}/bin/esp-appweb.conf
 cp -r src/esp/esp-appweb.conf ${CONFIG}/bin/esp-appweb.conf
 
+rm -rf ${CONFIG}/inc/ejs.h
+cp -r src/deps/ejs/ejs.h ${CONFIG}/inc/ejs.h
+
+rm -rf ${CONFIG}/inc/ejs.slots.h
+cp -r src/deps/ejs/ejs.slots.h ${CONFIG}/inc/ejs.slots.h
+
+rm -rf ${CONFIG}/inc/ejsByteGoto.h
+cp -r src/deps/ejs/ejsByteGoto.h ${CONFIG}/inc/ejsByteGoto.h
+
+"${CC}" -c -Fo${CONFIG}/obj/ejsLib.obj -Fd${CONFIG}/obj/ejsLib.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/ejs/ejsLib.c
+
+"${LD}" -dll -out:${CONFIG}/bin/libejs.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/libejs.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/ejsLib.obj ${LIBS} libhttp.lib libmpr.lib libpcre.lib libsqlite3.lib libpcre.lib
+
+"${CC}" -c -Fo${CONFIG}/obj/ejs.obj -Fd${CONFIG}/obj/ejs.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/ejs/ejs.c
+
+"${LD}" -out:${CONFIG}/bin/ejs.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/ejs.obj ${LIBS} libejs.lib libhttp.lib libmpr.lib libpcre.lib libsqlite3.lib
+
+"${CC}" -c -Fo${CONFIG}/obj/ejsc.obj -Fd${CONFIG}/obj/ejsc.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/deps/ejs/ejsc.c
+
+"${LD}" -out:${CONFIG}/bin/ejsc.exe -entry:mainCRTStartup -subsystem:console ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/ejsc.obj ${LIBS} libejs.lib libhttp.lib libmpr.lib libpcre.lib libsqlite3.lib
+
+cd src/deps/ejs >/dev/null ;\
+../../../${CONFIG}/bin/ejsc --out ../../../${CONFIG}/bin/ejs.mod --optimize 9 --bind --require null ejs.es ;\
+cd - >/dev/null 
+
 "${CC}" -c -Fo${CONFIG}/obj/cgiHandler.obj -Fd${CONFIG}/obj/cgiHandler.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc src/modules/cgiHandler.c
 
 "${LD}" -dll -out:${CONFIG}/bin/mod_cgi.dll -entry:_DllMainCRTStartup@12 -def:${CONFIG}/bin/mod_cgi.def ${LDFLAGS} ${LIBPATHS} ${CONFIG}/obj/cgiHandler.obj ${LIBS} libappweb.lib libhttp.lib libmpr.lib libpcre.lib
@@ -209,6 +234,10 @@ cp ../${CONFIG}/bin/cgiProgram cgi-bin/nph-cgiProgram.exe ;\
 cp ../${CONFIG}/bin/cgiProgram 'cgi-bin/cgi Program.exe' ;\
 cp ../${CONFIG}/bin/cgiProgram web/cgiProgram.cgi ;\
 chmod +x cgi-bin/* web/cgiProgram.cgi ;\
+cd - >/dev/null 
+
+cd test >/dev/null ;\
+cp -r ../src/esp/www/files/static/js 'web/js' ;\
 cd - >/dev/null 
 
 "${CC}" -c -Fo${CONFIG}/obj/removeFiles.obj -Fd${CONFIG}/obj/removeFiles.pdb ${CFLAGS} ${DFLAGS} -I${CONFIG}/inc package/windows/removeFiles.c
