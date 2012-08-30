@@ -21,7 +21,7 @@ static void details() {
 }
 
 static void login() { 
-    mprLog(0, "SESSION VAR %s", getSessionVar("id"));
+    // mprLog(0, "SESSION VAR %s", getSessionVar("id"));
     if (getSessionVar("id")[0]) {
         render("Logged in");
         finalize();
@@ -36,7 +36,7 @@ static void login() {
         finalize();
 
     } else {
-        mprLog(0, "TRACE CREATE SESSION");
+        // mprLog(0, "TRACE CREATE SESSION");
         createSession();
     }
 }
