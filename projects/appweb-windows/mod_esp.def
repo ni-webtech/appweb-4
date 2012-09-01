@@ -76,11 +76,11 @@ EXPORTS
   espAddHeader
   espAddHeaderString
   espAlert
-  espAllocSession
   espAnchor
   espAppendHeader
   espAppendHeaderString
   espAutoFinalize
+  espBindProc
   espBuildScript
   espButton
   espButtonLink
@@ -91,11 +91,9 @@ EXPORTS
   espClearFlash
   espCompile
   espCreateRec
-  espCreateSession
   espDefineAction
   espDefineBase
   espDefineView
-  espDestroySession
   espDivision
   espDropdown
   espEndform
@@ -124,10 +122,6 @@ EXPORTS
   espGetReferrer
   espGetRouteDatabase
   espGetSecurityToken
-  espGetSession
-  espGetSessionID
-  espGetSessionObj
-  espGetSessionVar
   espGetStatus
   espGetStatusMessage
   espGetTop
@@ -190,8 +184,6 @@ EXPORTS
   espSetIntParam
   espSetParam
   espSetRec
-  espSetSessionObj
-  espSetSessionVar
   espSetStatus
   espShowRequest
   espStylesheet
