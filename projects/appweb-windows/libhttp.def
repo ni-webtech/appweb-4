@@ -2,10 +2,11 @@ LIBRARY libhttp.dll
 EXPORTS
   HttpStatusCodes
   httpAcceptConn
+  httpAddAuthStore
+  httpAddAuthType
   httpAddCache
   httpAddConn
   httpAddEndpoint
-  httpAddGroup
   httpAddHeader
   httpAddHeaderString
   httpAddHomeRoute
@@ -15,6 +16,7 @@ EXPORTS
   httpAddParams
   httpAddResource
   httpAddResourceGroup
+  httpAddRole
   httpAddRoute
   httpAddRouteCondition
   httpAddRouteErrorDocument
@@ -31,16 +33,19 @@ EXPORTS
   httpAddStaticRoute
   httpAddUploadFile
   httpAddUser
-  httpAddUserToGroup
-  httpAddUsersToGroup
   httpAdjustPacketEnd
   httpAdjustPacketStart
+  httpAllocSession
   httpAppendHeader
   httpAppendHeaderString
   httpAppendQueue
   httpAssignQueue
   httpBackupRouteLog
+  httpBasicLogin
+  httpBasicParse
+  httpBasicSetHeaders
   httpCallEvent
+  httpCanUser
   httpCheckAuth
   httpClearRouteStages
   httpCloneHost
@@ -50,6 +55,8 @@ EXPORTS
   httpCloseConn
   httpCloseRx
   httpCompleteUri
+  httpComputeAllUserAbilities
+  httpComputeUserAbilities
   httpConfigureNamedVirtualEndpoints
   httpConnTimeout
   httpConnect
@@ -70,7 +77,6 @@ EXPORTS
   httpCreateEndpoint
   httpCreateEntityPacket
   httpCreateFilter
-  httpCreateGroup
   httpCreateHandler
   httpCreateHeaderPacket
   httpCreateHost
@@ -78,13 +84,16 @@ EXPORTS
   httpCreateInheritedRoute
   httpCreateLimits
   httpCreatePacket
+  httpCreateProcRoute
   httpCreateQueue
   httpCreateQueueHead
   httpCreateRange
+  httpCreateRole
   httpCreateRoute
   httpCreateRx
   httpCreateRxPipeline
   httpCreateSecret
+  httpCreateSession
   httpCreateStage
   httpCreateTx
   httpCreateTxPipeline
@@ -92,6 +101,7 @@ EXPORTS
   httpCreateUriFromParts
   httpCreateUser
   httpDefaultOutgoingServiceStage
+  httpDefineProc
   httpDefineRoute
   httpDefineRouteBuiltins
   httpDefineRouteCondition
@@ -102,20 +112,21 @@ EXPORTS
   httpDestroyEndpoint
   httpDestroyPipeline
   httpDestroyRx
+  httpDestroySession
   httpDestroyTx
-  httpDisableGroup
-  httpDisableUser
+  httpDigestLogin
+  httpDigestParse
+  httpDigestSetHeaders
   httpDiscardData
   httpDiscardQueueData
   httpDisconnect
   httpEaseLimits
   httpEnableConnEvents
-  httpEnableGroup
   httpEnableTraceMethod
   httpEnableUpload
-  httpEnableUser
   httpError
   httpEvent
+  httpExpandRouteVars
   httpFileExists
   httpFilterChunkData
   httpFinalize
@@ -140,12 +151,12 @@ EXPORTS
   httpGetDateString
   httpGetDefaultClientHost
   httpGetDefaultClientPort
+  httpGetDefaultHost
+  httpGetDefaultRoute
   httpGetEndpointContext
   httpGetError
   httpGetExt
-  httpGetFilePassword
   httpGetFirstEndpoint
-  httpGetGroupAcl
   httpGetHeader
   httpGetHeaderHash
   httpGetHeaders
@@ -158,7 +169,6 @@ EXPORTS
   httpGetOptionHash
   httpGetOptions
   httpGetPacket
-  httpGetPamPassword
   httpGetParam
   httpGetParams
   httpGetParamsString
@@ -170,6 +180,10 @@ EXPORTS
   httpGetRouteData
   httpGetRouteDir
   httpGetRouteMethods
+  httpGetSession
+  httpGetSessionID
+  httpGetSessionObj
+  httpGetSessionVar
   httpGetStageData
   httpGetStatus
   httpGetStatusMessage
@@ -182,14 +196,12 @@ EXPORTS
   httpInitSchedulerQueue
   httpInitTrace
   httpInsertOption
-  httpInsertQueue
+  httpIsAuthenticated
   httpIsEndpointAsync
   httpIsEof
   httpIsFinalized
-  httpIsGroupEnabled
   httpIsPacketTooBig
   httpIsQueueEmpty
-  httpIsUserEnabled
   httpJoinPacket
   httpJoinPacketForService
   httpJoinPackets
@@ -198,6 +210,8 @@ EXPORTS
   httpLink
   httpLogRequest
   httpLogRoutes
+  httpLogin
+  httpLookupAuthType
   httpLookupEndpoint
   httpLookupHost
   httpLookupHostOnEndpoint
@@ -225,13 +239,13 @@ EXPORTS
   httpOpenChunkFilter
   httpOpenNetConnector
   httpOpenPassHandler
+  httpOpenProcHandler
   httpOpenQueue
   httpOpenRangeFilter
   httpOpenRouteLog
   httpOpenSendConnector
   httpOpenUploadFilter
   httpOption
-  httpParseAcl
   httpPrepClientConn
   httpPrepServerConn
   httpProcessHandler
@@ -242,23 +256,20 @@ EXPORTS
   httpPutPacketToNext
   httpPutPackets
   httpRead
-  httpReadGroupFile
   httpReadString
-  httpReadUserFile
   httpReadyHandler
   httpRedirect
   httpRemoveAllUploadedFiles
   httpRemoveConn
   httpRemoveEndpoint
-  httpRemoveGroup
   httpRemoveHeader
   httpRemoveHost
   httpRemoveOption
   httpRemoveQueue
+  httpRemoveRole
+  httpRemoveSessionVar
   httpRemoveUploadFile
   httpRemoveUser
-  httpRemoveUserFromGroup
-  httpRemoveUsersFromGroup
   httpResetCredentials
   httpResetHandlers
   httpResetRoutePipeline
@@ -278,13 +289,17 @@ EXPORTS
   httpSetAsync
   httpSetAuthAllow
   httpSetAuthAnyValidUser
+  httpSetAuthAutoLogin
   httpSetAuthDeny
   httpSetAuthOrder
+  httpSetAuthPermittedUsers
+  httpSetAuthPost
   httpSetAuthQop
   httpSetAuthRealm
-  httpSetAuthRequiredGroups
-  httpSetAuthRequiredUsers
-  httpSetAuthUser
+  httpSetAuthRequiredAbilities
+  httpSetAuthSecure
+  httpSetAuthStore
+  httpSetAuthType
   httpSetChunkSize
   httpSetConnContext
   httpSetConnHost
@@ -296,13 +311,13 @@ EXPORTS
   httpSetCredentials
   httpSetDefaultClientHost
   httpSetDefaultClientPort
+  httpSetDefaultHost
   httpSetEndpointAddress
   httpSetEndpointAsync
   httpSetEndpointContext
   httpSetEndpointNotifier
   httpSetEntityLength
   httpSetForkCallback
-  httpSetGroupAcl
   httpSetHasNamedVirtualHosts
   httpSetHeader
   httpSetHeaderString
@@ -322,7 +337,6 @@ EXPORTS
   httpSetPipelineHandler
   httpSetProtocol
   httpSetProxy
-  httpSetRequiredAcl
   httpSetResponded
   httpSetRetries
   httpSetRouteAuth
@@ -338,7 +352,6 @@ EXPORTS
   httpSetRouteLog
   httpSetRouteMethods
   httpSetRouteName
-  httpSetRoutePathVar
   httpSetRoutePattern
   httpSetRoutePrefix
   httpSetRouteScript
@@ -346,8 +359,11 @@ EXPORTS
   httpSetRouteTarget
   httpSetRouteTemplate
   httpSetRouteTraceFilter
+  httpSetRouteVar
   httpSetRouteWorkers
   httpSetSendConnector
+  httpSetSessionObj
+  httpSetSessionVar
   httpSetSoftware
   httpSetStageData
   httpSetState
@@ -375,13 +391,10 @@ EXPORTS
   httpTraceContent
   httpTrimExtraPath
   httpUpdateCache
-  httpUpdateUserAcls
   httpUriToString
   httpUsePrimary
   httpUseWorker
-  httpValidateFileCredentials
   httpValidateLimits
-  httpValidatePamCredentials
   httpVerifyQueue
   httpWait
   httpWillNextQueueAcceptPacket
@@ -389,10 +402,8 @@ EXPORTS
   httpWrite
   httpWriteBlock
   httpWriteCached
-  httpWriteGroupFile
   httpWriteHeaders
   httpWriteRouteLog
   httpWriteSafeString
   httpWriteString
   httpWriteUploadData
-  httpWriteUserFile
