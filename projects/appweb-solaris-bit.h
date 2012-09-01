@@ -11,7 +11,6 @@
 #define BIT_BUILD_NUMBER "0"
 #define BIT_COMPANY "Embedthis"
 #define BIT_DEPTH 1
-#define BIT_EJS_ONE_MODULE 1
 #define BIT_HAS_DOUBLE_BRACES 1
 #define BIT_HAS_DYN_LOAD 1
 #define BIT_HAS_LIB_EDIT 0

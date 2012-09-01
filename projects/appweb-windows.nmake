@@ -40,10 +40,6 @@ all: prep \
         $(CONFIG)\bin\esp.conf \
         $(CONFIG)\bin\esp-www \
         $(CONFIG)\bin\esp-appweb.conf \
-        $(CONFIG)\bin\libejs.dll \
-        $(CONFIG)\bin\ejs.exe \
-        $(CONFIG)\bin\ejsc.exe \
-        $(CONFIG)\bin\ejs.mod \
         $(CONFIG)\bin\mod_cgi.dll \
         $(CONFIG)\bin\authpass.exe \
         $(CONFIG)\bin\cgiProgram.exe \
@@ -88,10 +84,6 @@ clean:
 	-if exist $(CONFIG)\bin\esp.conf del /Q $(CONFIG)\bin\esp.conf
 	-if exist $(CONFIG)\bin\esp-www del /Q $(CONFIG)\bin\esp-www
 	-if exist $(CONFIG)\bin\esp-appweb.conf del /Q $(CONFIG)\bin\esp-appweb.conf
-	-if exist $(CONFIG)\bin\libejs.dll del /Q $(CONFIG)\bin\libejs.dll
-	-if exist $(CONFIG)\bin\ejs.exe del /Q $(CONFIG)\bin\ejs.exe
-	-if exist $(CONFIG)\bin\ejsc.exe del /Q $(CONFIG)\bin\ejsc.exe
-	-if exist $(CONFIG)\bin\ejs.mod del /Q $(CONFIG)\bin\ejs.mod
 	-if exist $(CONFIG)\bin\mod_cgi.dll del /Q $(CONFIG)\bin\mod_cgi.dll
 	-if exist $(CONFIG)\bin\authpass.exe del /Q $(CONFIG)\bin\authpass.exe
 	-if exist $(CONFIG)\bin\cgiProgram.exe del /Q $(CONFIG)\bin\cgiProgram.exe
@@ -131,9 +123,6 @@ clean:
 	-if exist $(CONFIG)\obj\mdb.obj del /Q $(CONFIG)\obj\mdb.obj
 	-if exist $(CONFIG)\obj\sdb.obj del /Q $(CONFIG)\obj\sdb.obj
 	-if exist $(CONFIG)\obj\esp.obj del /Q $(CONFIG)\obj\esp.obj
-	-if exist $(CONFIG)\obj\ejsLib.obj del /Q $(CONFIG)\obj\ejsLib.obj
-	-if exist $(CONFIG)\obj\ejs.obj del /Q $(CONFIG)\obj\ejs.obj
-	-if exist $(CONFIG)\obj\ejsc.obj del /Q $(CONFIG)\obj\ejsc.obj
 	-if exist $(CONFIG)\obj\cgiHandler.obj del /Q $(CONFIG)\obj\cgiHandler.obj
 	-if exist $(CONFIG)\obj\ejsHandler.obj del /Q $(CONFIG)\obj\ejsHandler.obj
 	-if exist $(CONFIG)\obj\phpHandler.obj del /Q $(CONFIG)\obj\phpHandler.obj
@@ -415,59 +404,6 @@ $(CONFIG)\bin\esp-www:
 $(CONFIG)\bin\esp-appweb.conf: 
 	-if exist $(CONFIG)\bin\esp-appweb.conf del /Q $(CONFIG)\bin\esp-appweb.conf
 	copy /Y src\esp\esp-appweb.conf $(CONFIG)\bin\esp-appweb.conf
-
-$(CONFIG)\inc\ejs.h: 
-	-if exist $(CONFIG)\inc\ejs.h del /Q $(CONFIG)\inc\ejs.h
-	copy /Y src\deps\ejs\ejs.h $(CONFIG)\inc\ejs.h
-
-$(CONFIG)\inc\ejs.slots.h: 
-	-if exist $(CONFIG)\inc\ejs.slots.h del /Q $(CONFIG)\inc\ejs.slots.h
-	copy /Y src\deps\ejs\ejs.slots.h $(CONFIG)\inc\ejs.slots.h
-
-$(CONFIG)\inc\ejsByteGoto.h: 
-	-if exist $(CONFIG)\inc\ejsByteGoto.h del /Q $(CONFIG)\inc\ejsByteGoto.h
-	copy /Y src\deps\ejs\ejsByteGoto.h $(CONFIG)\inc\ejsByteGoto.h
-
-$(CONFIG)\obj\ejsLib.obj: \
-        src\deps\ejs\ejsLib.c \
-        $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\ejsLib.obj -Fd$(CONFIG)\obj\ejsLib.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\ejs\ejsLib.c
-
-$(CONFIG)\bin\libejs.dll:  \
-        $(CONFIG)\bin\libhttp.dll \
-        $(CONFIG)\bin\libsqlite3.dll \
-        $(CONFIG)\bin\libpcre.dll \
-        $(CONFIG)\inc\ejs.h \
-        $(CONFIG)\inc\ejs.slots.h \
-        $(CONFIG)\inc\ejsByteGoto.h \
-        $(CONFIG)\obj\ejsLib.obj
-	"$(LD)" -dll -out:$(CONFIG)\bin\libejs.dll -entry:$(ENTRY) -def:$(CONFIG)\bin\libejs.def $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\ejsLib.obj $(LIBS) libhttp.lib libmpr.lib libpcre.lib libsqlite3.lib libpcre.lib
-
-$(CONFIG)\obj\ejs.obj: \
-        src\deps\ejs\ejs.c \
-        $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\ejs.obj -Fd$(CONFIG)\obj\ejs.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\ejs\ejs.c
-
-$(CONFIG)\bin\ejs.exe:  \
-        $(CONFIG)\bin\libejs.dll \
-        $(CONFIG)\obj\ejs.obj
-	"$(LD)" -out:$(CONFIG)\bin\ejs.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\ejs.obj $(LIBS) libejs.lib libhttp.lib libmpr.lib libpcre.lib libsqlite3.lib
-
-$(CONFIG)\obj\ejsc.obj: \
-        src\deps\ejs\ejsc.c \
-        $(CONFIG)\inc\bit.h
-	"$(CC)" -c -Fo$(CONFIG)\obj\ejsc.obj -Fd$(CONFIG)\obj\ejsc.pdb $(CFLAGS) $(DFLAGS) -I$(CONFIG)\inc src\deps\ejs\ejsc.c
-
-$(CONFIG)\bin\ejsc.exe:  \
-        $(CONFIG)\bin\libejs.dll \
-        $(CONFIG)\obj\ejsc.obj
-	"$(LD)" -out:$(CONFIG)\bin\ejsc.exe -entry:mainCRTStartup -subsystem:console $(LDFLAGS) $(LIBPATHS) $(CONFIG)\obj\ejsc.obj $(LIBS) libejs.lib libhttp.lib libmpr.lib libpcre.lib libsqlite3.lib
-
-$(CONFIG)\bin\ejs.mod:  \
-        $(CONFIG)\bin\ejsc.exe
-	cd src\deps\ejs
-		"..\..\..\$(CONFIG)\bin\ejsc" --out "..\..\..\$(CONFIG)\bin\ejs.mod" --optimize 9 --bind --require null "ejs.es"
-		cd ..\..\..
 
 $(CONFIG)\obj\cgiHandler.obj: \
         src\modules\cgiHandler.c \

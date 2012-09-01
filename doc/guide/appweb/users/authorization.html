@@ -81,58 +81,76 @@
             <p>Authorization is the process by which a client's identity is verified before gaining access to
             documents. Authorization is essential when you have content that you wish to protect and provide only to
             specific, approved clients.</p>
-            <p>Appweb implements a powerful and flexible authorization mechanism that supports both the Basic and
-            Digest authorization schemes prevalent in most browsers. It employs a unified user account and user group
-            database for easy configuration.</p>
-            <p>Appweb also supports HTML web based authentication schemes via the ESP and Ejscript web frameworks. These
-            both provide access to sessions and cookies, and provide assistance in creating login dialogs.</p>
+            <p>Appweb implements a powerful and flexible authorization mechanism that supports Basic, Digest and
+            web form-based authorization schemes. Appweb employs a unified flexible authentication front and back ends
+            that can be mixed and matched to meet most authentication needs.</p>
             
             <a id="basicAuthentication"></a>
-            <h2>HTTP-Based Authentication</h2>
+            <h2>Authentication Schemes</h2>
+            <p>Appweb provides three authentication schemes or types.
+            <ul>
+                <li>Basic Authentication</li>
+                <li>Digest Authentication</li>
+                <li>Post Web Form </li>
+                <li>Custom via API</li>
+            </ul>
             <p>Basic and Digest authentication are HTTP protocol mechanisms defined by the <a href=
-            "http://www.w3.org/Protocols/rfc2616/rfc2616.html">HTTP/1.1</a> specification. Because they operate at the
-            protocol level, they offer a low level of capability and flexibility. When a user attempts to access
+            "http://www.w3.org/Protocols/rfc2616/rfc2616.html">HTTP/1.1 RFC2616</a> specification. Because they operate
+            at the protocol level, they offer a low level of capability and flexibility. When a user attempts to access
             secured content, the browser displays a generic pop-up dialog box to prompt for the user's credentials. On
-            the server, Appweb consults generic (not application specific) user password files. While these can be
-            customized via VirtualHost and Route directives, often applications need to apply an
-            application-level user login mechanism. Such login facilities are defined at the application level using
-            session state storage and cookies and are beyond the scope of this document. The ESP web framework
-            is ideal for such application level authentication.</p>
+            the server, Appweb consults appropriate user password stores to authenticate the user.</p>
+            <p>Increasingly, applications need to utilize an application-level user login mechanism that is more
+            integrated into the overall look-and-feel of the application. Such login facilities are defined using HTTP 
+            Post requests from standard web page forms.</p>
+
             <h2 class="section">Basic Authentication</h2>
             <p>Basic authentication was the original HTTP/1.0 authentication scheme. It transmits user names and
             passwords using a trivial encoding that is no better than using plain text.</p>
             <p><b>SECURITY WARNING</b>: You should not use Basic Authentication if at all possible. Use Digest
-            Authentication instead if it is supported by your clients.</p>
+            Authentication instead if it is supported by your clients. If you must use Basic Authentication, use it over
+            TLS/SSL which will encrypt the password over the wire.</p>
             <h2>Basic Authentication Directives</h2>
             <p>Appweb basic authorization is controlled by configuration file directives that may be used inside a
             Route or VirtualHost block, or within the Default server configuration.</p>
             <pre>
 &lt;Route /private/&gt;
     <b>AuthType basic</b>
-    AuthName "Acme Inc"
-    AuthUserFile users.db
+    AuthRealm "example.com"
+    User julie 9d8873a123eb506e7f8e84d1f2a26916 view
     Require valid-user
 &lt;/Route&gt;
 </pre>
-            <p>This example restricts access to the "/acme" directory and all subdirectories to users whose username
-            and password are validated against the user.db password file.</p>
+            <p>This example restricts access to URIs beginning with "/private". It permits access to the user
+            "julie" once authenticated.</p>
             <p>The <a href="dir/auth.html#authType">AuthType</a> directive specifies that basic authorization is being
-            used. The <a href="dir/auth.html#authName">AuthName</a> directive specifies the realm of access to Appweb.
-            The <a href="dir/auth.html#authUserFile">AuthUserFile</a> directive specifies the location of the user
+            used. The <a href="dir/auth.html#authName">AuthRealm</a> directive specifies the realm of access to Appweb.
+            The realm is used in combination with the username and password to encrypt the password.
+            The <a href="dir/auth.html#User">AuthUserFile</a> directive specifies the location of the user
             password file. You may use a single password file for all authorization, or you can use different files for
             each authorization section.</p>
-            <p>User passwords are defined for a user account / realm combination. To create passwords, see the section
-            below that describes the <a href="#auth">auth</a> utility.</p>
-            <p>The <a href="dir/auth.html#require">Require</a> directive controls how users are validated. There are
-            three possibilities for validating users: by group name, by user id, or by any valid user name. The
-            associated directives are:</p>
+            <p>The <a href="dir/auth.html#user">User</a> directive defines a user by name with encrypted password and
+            zero or more roles for the user. Typically, User and Role directives are placed in a separate configuration 
+            file called <tt>auth.conf</tt> and are included via an <tt>"include auth.conf"</tt> directive.
+            To create passwords, see the section
+            below that describes the <a href="#authpass">authpass</a> utility.</p>
+
+            <h3>Require Directive</h3>
+            <p>The <a href="dir/auth.html#require">Require</a> directive controls access to the resources controlled by
+            the route. There are four possibilities to control access: require a valid user, require a named user, 
+            require a secure protocol such as TLS/SSL to be used, and require that the authenticated user possess all the
+            specified abilities. </p>
             <ul>
-                <li>Require group groupName ...</li>
-                <li>Require user userid ...</li>
                 <li>Require valid-user</li>
+                <li>Require user username ...</li>
+                <li>Require secure</li>
+                <li>Require ability name...</li>
             </ul>
-            <p><b>SECURITY WARNING</b>: it is essential that the AuthUserFile and the AuthGroupFile be stored outside
-            the DocumentRoot or any directory serving content.</p><a id= "digestAuthentication"></a>
+            <p>Of these alternatives, "require valid-user" and require user name" are mutulally exclusive.</p>
+
+            <p><b>SECURITY WARNING</b>: it is essential that the authentication file be stored outside
+            the DocumentRoot or any directory serving content.</p>
+            
+            <a id="digestAuthentication"></a>
             <h2 class="section">Digest Authentication</h2>
             <p>The Digest authentication scheme is a modern replacement for the Basic authorization scheme. It uses
             cryptographic techniques to encode passwords and does not transmit sensitive information in clear-text.</p>
@@ -142,39 +160,110 @@
             <pre>
 &lt;Route /private/&gt;
     <b>AuthType Digest</b>
-    AuthName "Acme Inc"
-    AuthUserFile users.db
-    Require use roadRunner
+    AuthRealm "example.com"
+    include auth.conf
+    Require user peter
 &lt;/Route&gt;
 </pre>
-            <p>This example restricts access to the "/acme" directory and all sub-directories to users whose username
+            <p>This example restricts access to the "/private" directory and all sub-directories to users whose username
             and password are validated against the designated user.db password file. The essential differences between
             this example and the Basic Authorization example is the AuthType directive.</p><a id="auth"></a>
-            <h2 class="section">auth</h2>
-            <p>The auth program is used to create user passwords in a nominated password file. Appweb uses the
-            same authorization file and format for Digest and Basic authentication. This simplifies administration. The
-            file format is:</p>
+
+            <a id="postAuthentication"></a>
+            <h2 class="section">Post Authentication</h2>
+            <p>The Post authentication scheme uses a standard web page form that asks the user to enter their name and
+            password. These values are then submitted to Appweb via a standard Http POST request. Appweb analyzes the
+            user and password and if authenticated, the user credentials are stored and a session cookie is returned 
+            to the client. Subsequent requests that include the cookie will be automatically authenticated and
+            served.</p>
+            <p>The <a href="dir/auth.html#authType">AuthType post</a> directive controls how Post authentication
+            operates. The post variant of AuthType specifies the login web page, the login service URI, the logout 
+            service URI and the destination web page once authenticated. The format is:
+    <pre>AuthType post Login-Page Login-Service Logout-Service Logged-In-Destination</pre>
+            <p>For example:</p>
             <pre>
-coyote:Realm:EncryptedPassword
+&lt;Route ^/&gt;
+    <b>AuthType post /auth/login.html /auth/login /auth/logout /</b>
+&lt;/Route&gt; 
 </pre>
-            <p>The auth will create and modify such entries in the password file.</p>
-            <p>The Realm is the name used in the AuthName directive. The EncryptedPassword is an MD5 secure hash of the
-            user name, realm, and password.</p>
-            <p>The command line syntax for auth is:</p>
+            <p>This directive enables Post authentication for all requests and will redirect the client browser to
+            <tt>/auth/login.esp</tt> to prompt for the username and password. This example uses a plain HTML web page, but 
+            the web page can be created in ESP, PHP, CGI or any other web framework. The web page should submit the username
+            and password to the <tt>/auth/login</tt> login service. When logout is required, the client should submit
+            a HTTP POST request to the logout service URI <tt>/auth/logout</tt>. The last field in the AuthType
+            directive is the destination URI to which the client's browser will be redirected once logged in. </p>
+
+            <p>The Login-Service is URI that is bound to an internal service to receive the username and password and
+            authenticate the user. You can supply your own login and logout service by specifying the empty string
+            <tt>""</tt> for these fields. In that case, your login service must receive the username and password
+            and then call <tt>httpLogin</tt> to validate the user against the configured password store.</p>
+
+            <h3>Web Form</h3>
+            <p>Here is a minimal example login form:</p>
             <pre>
-auth [-c] [-p passWord] userFile realm userName
+&lt;html&gt;&lt;head&gt;&lt;title&gt;login.esp&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+    &lt;p&gt;Please log in&lt;/p&gt;
+    &lt;form name="details" method="post" <b>action="/auth/login"</b>&gt;
+        Username &lt;input type="text" <b>name="username"</b> value=''&gt;&lt;br/&gt;
+        Password &lt;input type="password" <b>name="password"</b> value=''&gt;&lt;br/&gt;
+        &lt;input type="submit" name="submit" value="OK"&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;
 </pre>
-            <p>The userFile parameter specifies the name of the user password file. The userName is the name of the
-            user. If the -p password option is not used, auth will prompt for the password. The -c option will
-            cause auth to create the password file, otherwise it will update the nominated userFile.</p>
-            <p><b>SECURITY WARNING</b>: it is essential that the AuthUserFile and the AuthGroupFile be stored outside
+            <p>The two submitted fields must be named <tt>username</tt> and <tt>password</tt>. 
+            <p>If the login attempt succeeds, the client will receive a response including a session cookie and 
+            will be redirected to the Destination URI. If the destination URI includes a <tt>referrer:</tt> prefix and
+            the login form request contatained a referrer URI in the HTTP header, then that referrer URI will be used
+            as the destination instead of the hard-wired destination.</p>
+
+            <h3>Securing the Password</h3>
+            <p><b>SECURITY WARNING:</b>The Post authentication scheme submits the user password as plain text. To secure
+            communications, the Post authentication schem should be used over a secure connection using TLS/SSL.</p>
+
+            <p>As an optimization, Appweb also uses sessions and cookies to cache user credentials for Basic and Digest
+            authentication schemes. This saves CPU resources on both the client and server.</p>
+
+            <a id="authStores"></a>
+            <h2 class="section">Password Stores</h2>
+AUTH STORES
+
+            <h2 class="section">Password Program</h2>
+            <p>The authpass program is used to create user passwords in an authentication file. Appweb uses the
+            same authorization file and format for Basic, Digest and Post authentication types. This simplifies
+            administration. The file simply contains User and Role directives and may be edited by hand</p>
+            <pre>
+#
+#   auth.conf - Authorization data
+#
+Role administrator view
+Role executive manage direct
+Role user view
+
+User julie 9d8873a123eb506e7f8e84d1f2a26916 user
+User peter 7cdba57892649fd95a540683fdf8fba6 user
+User joshua 2fd6e47ff9bb70c0465fd2f5c8e5305e user administrator purchase
+User mary 5b90553bea8ba3686f4239d62801f0f3 user executive
+</pre>
+            <p>The authpass program will create and modify User directives in the authentication file.</p>
+            <p>The command line syntax for authpass is:</p>
+            <pre>
+authpass [-c] [-p passWord] authFile realm username roles...
+</pre>
+            <p>The authFile parameter specifies the name of the authentication file. 
+            If the -p password option is not used, authpass will prompt for the password. The -c option will
+            cause authpass to create the authentication file if it does not already exist. Otherwise it will update the
+            nominated file.</p> 
+            <p>The Realm is the name used in the AuthRealm directive.
+            <p><b>SECURITY WARNING</b>: it is essential that the authentication file be stored outside
             the DocumentRoot or any directory serving content.</p>
             
             <a id="beltAndSuspenders"></a>
             <h2 class="section">Belt and suspenders</h2>
             <p>The public Internet is not a friendly place anymore, if it ever was. It is important to take adequate
             precautions and secure your web content with appropriate authorization and encryption.</p>
-            <p>An ideal combination is Digest authentication to authorize users, and the SSL protocol to authenticate
+            <p>An ideal combination is Digest authentication to authorize users, and the TLS/SSL protocol to authenticate
             servers. Using both techniques is the proverbial "belt and suspenders".</p>
         </div>
     </div>
