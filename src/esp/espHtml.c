@@ -645,6 +645,8 @@ static void filterCols(EdiGrid *grid, MprHash *options, MprHash *colOptions)
             location[c] = c;
         }
         for (c = 0; c < ncols; c++) {
+            //  MOB - what should fnum be initialized to for outside the lower loop
+            fnum = c;
             for (r = 0; r < grid->nrecords; r++) {
                 rec = grid->records[r];
                 rec->nfields = ncols;
