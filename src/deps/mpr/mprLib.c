@@ -27772,7 +27772,6 @@ static void changeState(MprWorker *worker, int state)
     int                 wake;
 
     if (state == worker->state) {
-        mprLog(4, "changeState already in desired state %d", state);
         return;
     }
     wake = 0;

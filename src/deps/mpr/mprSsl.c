@@ -1660,6 +1660,8 @@ static DH *get_dh1024()
     return dh;
 }
 
+#else
+int mprCreateOpenSslModule() { return -1; }
 #endif /* BIT_PACK_OPENSSL */
 
 /*
@@ -1722,6 +1724,8 @@ int mprSslInit(void *unused, MprModule *module)
     return 0;
 }
 
+#else
+int mprSslInit(void *unused, MprModule *module) { return -1; }
 #endif /* BLD_PACK_SSL */
 
 /*
