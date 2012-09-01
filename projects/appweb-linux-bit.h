@@ -60,7 +60,7 @@
 /* Profile */
 #define BIT_APPWEB_PRODUCT 1
 #define BIT_PROFILE "debug"
-#define BIT_CONFIG_CMD "bit -d -q -platform linux-x86 -without all -configure . -gen sh,make"
+#define BIT_CONFIG_CMD "bit --dump -d -q -platform linux-x86 -without all -configure . -gen sh,make"
 
 /* Miscellaneous */
 #define BIT_MAJOR_VERSION 4
