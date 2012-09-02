@@ -34,7 +34,9 @@ public function packageBinaryFiles(formats = ['tar', 'native']) {
         install('doc/product/README.TXT', pkg, {fold: true, expand: true})
         install('package/install.sh', pkg.join('install'), {permissions: 0755, expand: true})
         install('package/uninstall.sh', pkg.join('uninstall'), {permissions: 0755, expand: true})
-
+        if (bit.platform.os == 'windows') {
+            install('package/windows/LICENSE.TXT', bin, {fold: true, expand: true})
+        }
         install('LICENSE.md', p.product, {fold: true, expand: true})
         install('doc/product/README.TXT', p.product, {fold: true, expand: true})
         install('package/uninstall.sh', p.bin.join('uninstall'), {permissions: 0755, expand: true})
