@@ -1570,7 +1570,8 @@ static void migrate(HttpRoute *route, int argc, char **argv)
     if (app->error) {
         return;
     }
-    onlyOne = backward = targetSeq = 0;
+    onlyOne = backward = 0;
+    targetSeq = 0;
     lastMigration = 0;
     command = 0;
 

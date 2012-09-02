@@ -45,6 +45,7 @@ if (path) {
                 ejs.join(n).remove()
             }
             trace('Done', 'Ejscript distribution')
+            bit.settings.ejsOneModule = true
         } catch (e) {
             trace('Prepare', 'Failed: ' + e)
         }
