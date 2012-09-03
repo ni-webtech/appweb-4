@@ -190,3 +190,4 @@ access.log.*
 /start.bit
 *-vsdebug
 test/web/js
+test/web/auth/basic/basic.cgi

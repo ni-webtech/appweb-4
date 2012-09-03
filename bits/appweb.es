@@ -250,7 +250,10 @@ public function uninstallBinary() {
     if (bit.platform.os == 'windows') {
         Cmd([bit.prefixes.bin.join('appwebMonitor'), '--stop'])
     }
-    Cmd([bit.prefixes.bin.join('appman'), '--continue', 'stop', 'disable', 'uninstall'])
+    let appman = Cmd.locate(bit.prefixes.bin.join('appman'))
+    if (appman) {
+        Cmd([appman, '--continue', 'stop', 'disable', 'uninstall'])
+    }
     let fileslog = bit.prefixes.productver.join('files.log')
     if (fileslog.exists) {
         for each (let file: Path in fileslog.readLines()) {
