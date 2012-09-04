@@ -4395,10 +4395,13 @@ Http *httpCreate()
     Http            *http;
     HttpStatusCode  *code;
 
+    mprGlobalLock();
     if (MPR->httpService) {
+        mprGlobalUnlock();
         return MPR->httpService;
     }
     if ((http = mprAllocObj(Http, manageHttp)) == 0) {
+        mprGlobalUnlock();
         return 0;
     }
     MPR->httpService = http;
@@ -4442,6 +4445,7 @@ Http *httpCreate()
     mprSetIdleCallback(isIdle);
     mprAddTerminator(terminateHttp);
     httpDefineRouteBuiltins();
+    mprGlobalUnlock();
     return http;
 }
 
