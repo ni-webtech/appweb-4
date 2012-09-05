@@ -12534,6 +12534,7 @@ int mprServiceEvents(MprTime timeout, int flags)
                 continue;
             }
             if (justOne) {
+                MPR->eventing = 0;
                 return abs(es->eventCount - beginEventCount);
             }
         } 
@@ -23888,6 +23889,7 @@ static ssize writeSocket(MprSocket *sp, cvoid *buf, ssize bufsize)
 #if BIT_WIN_LIKE
                     /*
                         Windows sockets don't support blocking I/O. So we simulate here
+                        OPT - could wait for a writable event
                      */
                     if (sp->flags & MPR_SOCKET_BLOCK) {
                         mprNap(0);
