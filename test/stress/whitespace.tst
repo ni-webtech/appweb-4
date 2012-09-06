@@ -13,7 +13,7 @@ s = new Socket
 s.connect(HTTP.address)
 count += s.write(" GET /index.html HTTP/1.0\r\n\r\n")
 assert(count > 0)
-for (count = 0; (n = s.read(response, -1)) > 0; count += n) { }
+for (count = 0; (n = s.read(response, -1)) != null; count += n) { }
 assert(response.toString().contains('200 OK'))
 assert(response.toString().contains('Hello /index'))
 s.close()
@@ -24,7 +24,7 @@ s = new Socket
 s.connect(HTTP.address)
 count += s.write("GET         /index.html HTTP/1.0\r\n\r\n")
 assert(count > 0)
-for (count = 0; (n = s.read(response, -1)) > 0; count += n) { }
+for (count = 0; (n = s.read(response, -1)) != null; count += n) { }
 assert(response.toString().contains('200 OK'))
 assert(response.toString().contains('Hello /index'))
 s.close()
@@ -34,7 +34,7 @@ s = new Socket
 s.connect(HTTP.address)
 count += s.write("GET /index.html      HTTP/1.0\r\n\r\n")
 assert(count > 0)
-for (count = 0; (n = s.read(response, -1)) > 0; count += n) { }
+for (count = 0; (n = s.read(response, -1)) != null; count += n) { }
 assert(response.toString().contains('200 OK'))
 assert(response.toString().contains('Hello /index'))
 s.close()
