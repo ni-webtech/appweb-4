@@ -1553,6 +1553,7 @@ static int requireDirective(MaState *state, cchar *key, cchar *value)
         httpSetAuthPermittedUsers(state->auth, rest);
 
     } else if (scaselesscmp(type, "valid-user") == 0) {
+        /* DEPRECATED */
         httpSetAuthAnyValidUser(state->auth);
 
     } else if (scaselesscmp(type, "acl") == 0) {

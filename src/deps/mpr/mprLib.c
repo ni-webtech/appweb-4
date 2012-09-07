@@ -23736,7 +23736,7 @@ MprSocket *mprAcceptSocket(MprSocket *listen)
 
 
 /*  
-    Read data. Return -1 for EOF and errors. On success, return the number of bytes read
+    Read data. Return -1 for EOF and errors. On success, return the number of bytes read.
  */
 ssize mprReadSocket(MprSocket *sp, void *buf, ssize bufsize)
 {

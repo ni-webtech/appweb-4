@@ -117,7 +117,7 @@
     <b>AuthType basic</b>
     AuthRealm "example.com"
     User julie 9d8873a123eb506e7f8e84d1f2a26916 view
-    Require valid-user
+    Require user julie
 &lt;/Route&gt;
 </pre>
             <p>This example restricts access to URIs beginning with "/private". It permits access to the user
@@ -134,17 +134,23 @@
             To create passwords, see the section
             below that describes the <a href="#authpass">authpass</a> utility.</p>
             <h3>Require Directive</h3>
-            <p>The <a href="dir/auth.html#require">Require</a> directive controls access to the resources controlled by
-            the route. There are four possibilities to control access: require a valid user, require a named user, 
-            require a secure protocol such as TLS/SSL to be used, and require that the authenticated user possess all the
-            specified abilities. </p>
+            <p>The <a href="dir/auth.html#require">Require</a> directive controls access to the resources managed by
+            the route. There are three possibilities to control access: require specific named users, 
+            require a secure protocol such as TLS/SSL to be used, and require that the authenticated user possess 
+            a set of specified abilities. </p>
             <ul>
-                <li>Require valid-user</li>
                 <li>Require user username ...</li>
-                <li>Require secure</li>
                 <li>Require ability name...</li>
+                <li>Require secure</li>
             </ul>
-            <p>Of these alternatives, "require valid-user" and require user name" are mutulally exclusive.</p>
+            <p>When using <tt>Require ability</tt>, the abilities may be roles defined via the 
+            <a href="dir/auth.html#role">Role</a> directive, or they may be simple words which represent a discrete
+            ability that is explicitly specified in the <a href="dir/auth.html#user">User</a> directive.
+            <p>The <tt>require secure</tt> directive specifies that the SSL/TLS protocol must be used for the
+            request to permit access.</p>
+            <p>Note: These three require directives alternatives may be used in combination. However, multiple
+            <tt>Require user</tt> or multiple <tt>Require ability</tt> directives are not supported. The last 
+            directive will take precedence.</p>
             <p><b>SECURITY WARNING</b>: it is essential that the authentication file be stored outside
             the DocumentRoot or any directory serving content.</p>
             
@@ -238,13 +244,35 @@ Listen 443
 </pre>
             <a id="authStores"></a>
             <h2 class="section">Password Stores</h2>
-            <p>
+            <p>Appweb can retrieve passwords from the Unix system password database or from password text configuration 
+            file. Selection of the password store is controlled by the <a href="dir/auth.html#authStore">AuthStore</a>
+            directive.</p>
+<pre>
+AuthStore pam
+</pre>
+
+or 
+<pre>
+AuthStore internal
+User julie 9d8873a123eb506e7f8e84d1f2a26916 view
+</pre>
+            <p>The Unix system password database is managed via the <a href="http://kb.iu.edu/data/anpn.html">PAM</a> 
+            interface. Appweb uses this interface when the <tt>AuthStore pam</tt> directive is used.</p>
+            <p>The <tt>AuthStore internal</tt> option specifies that passwords will be defined by the
+            <a href="dir/auth.html#user">User</a> directive and will be stored internally in Appweb.
+            The default password store for Appweb is internal. Typically, User directives are kept in a separate
+            passwords are stored in a separate configuration file that is included from the <tt>appweb.conf</tt>
+            master configuration file.</p>
+<pre>
+include auth.conf
+</pre>
 
             <h2 class="section">Password Program</h2>
-            <p>The authpass program is used to create user passwords in an authentication file. Appweb uses the
-            same authorization file and format for Basic, Digest and Post authentication types. This simplifies
-            administration. The file simply contains User and Role directives and may be edited by hand</p>
-            <pre>
+            <p>The <tt>authpass</tt> program supports the <tt>internal</tt> AuthStore and is used to create user
+            passwords in an authentication file. Appweb uses the same authorization file and format for Basic, Digest
+            and Post authentication types. This simplifies administration. The file simply contains User and Role
+            directives and may be edited by hand if desired.</p> 
+<pre>
 #
 #   auth.conf - Authentication data
 #
@@ -256,7 +284,7 @@ User peter 7cdba57892649fd95a540683fdf8fba6 user
 User joshua 2fd6e47ff9bb70c0465fd2f5c8e5305e user administrator purchase
 User mary 5b90553bea8ba3686f4239d62801f0f3 user executive
 </pre>
-            <p>The authpass program will create and modify User directives in the authentication file.</p>
+            <p>The <tt>authpass</tt> program will create and modify User directives in the authentication file.</p>
             <p>The command line syntax for authpass is:</p>
             <pre>
 authpass [-c] [-p passWord] authFile realm username roles...
@@ -268,13 +296,6 @@ authpass [-c] [-p passWord] authFile realm username roles...
             <p>The Realm is the name used in the AuthRealm directive.
             <p><b>SECURITY WARNING</b>: it is essential that the authentication file be stored outside
             the DocumentRoot or any directory serving content.</p>
-            
-            <a id="beltAndSuspenders"></a>
-            <h2 class="section">Belt and suspenders</h2>
-            <p>The public Internet is not a friendly place anymore, if it ever was. It is important to take adequate
-            precautions and secure your web content with appropriate authorization and encryption.</p>
-            <p>An ideal combination is Digest authentication to authorize users, and the TLS/SSL protocol to authenticate
-            servers. Using both techniques is the proverbial "belt and suspenders".</p>
         </div>
     </div>
 <!-- BeginDsi "dsi/bottom.html" -->
