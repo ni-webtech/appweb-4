@@ -22,7 +22,7 @@
 
 NAME    := appweb
 OS      := $(shell uname | sed 's/CYGWIN.*/windows/;s/Darwin/macosx/' | tr '[A-Z]' '[a-z]')
-MAKE    := $(shell if which gmake ; then echo gmake ; else echo make ; fi)
+MAKE    := $(shell if which gmake >/dev/null; then echo gmake ; else echo make ; fi)
 EXT     := mk
 
 ifeq ($(OS),windows)
