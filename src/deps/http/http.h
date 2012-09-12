@@ -4135,6 +4135,13 @@ typedef struct HttpRx {
     char            *paramString;           /**< Cached param data as a string */
     HttpLang        *lang;                  /**< Selected language */
 
+#if WSS
+    char            *upgrade;               /**< Protocol upgrade header */
+    char            *sockKey;
+    char            *sockProtocol;
+    char            *sockVersion;
+    char            *origin;
+#endif
     /*
         Routing info
      */

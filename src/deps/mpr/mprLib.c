@@ -17885,6 +17885,8 @@ static char *standardMimeTypes[] = {
     "js",    "application/javascript",
     "json",  "application/json",
     "mp3",   "audio/mpeg",
+    "mpg",   "video/mpeg",
+    "mpeg",  "video/mpeg",
     "pdf",   "application/pdf",
     "php",   "application/x-php",
     "pl",    "application/x-perl",
@@ -25725,7 +25727,6 @@ char *strim(cchar *str, cchar *set, int where)
     }
     return s;
 }
-
 
 
 /*  

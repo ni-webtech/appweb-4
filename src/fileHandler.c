@@ -439,9 +439,6 @@ static void handlePutRequest(HttpQueue *q)
         httpSetHeader(conn, "Location", conn->rx->uri);
     }
     httpSetStatus(conn, tx->fileInfo.isReg ? HTTP_CODE_NO_CONTENT : HTTP_CODE_CREATED);
-#if UNUSED
-    httpOmitBody(conn);
-#endif
     q->pair->queueData = (void*) file;
 }
 
@@ -465,9 +462,6 @@ static void handleDeleteRequest(HttpQueue *q)
         return;
     }
     httpSetStatus(conn, HTTP_CODE_NO_CONTENT);
-#if UNUSED
-    httpOmitBody(conn);
-#endif
 }
 
 
