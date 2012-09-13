@@ -25,32 +25,52 @@ static bool checkSsl(MaState *state)
 
 static int sslCaCertificatePathDirective(MaState *state, cchar *key, cchar *value)
 {
+    char *path;
+    if (!maTokenize(state, value, "%P", &path)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+
     checkSsl(state);
-    mprSetSslCaPath(state->route->ssl, mprJoinPath(state->host->home, value));
+    mprSetSslCaPath(state->route->ssl, path);
     return 0;
 }
 
 
 static int sslCaCertificateFileDirective(MaState *state, cchar *key, cchar *value)
 {
+    char *path;
+    if (!maTokenize(state, value, "%P", &path)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+
     checkSsl(state);
-    mprSetSslCaFile(state->route->ssl, mprJoinPath(state->host->home, value));
+    mprSetSslCaFile(state->route->ssl, path);
     return 0;
 }
 
 
 static int sslCertificateFileDirective(MaState *state, cchar *key, cchar *value)
 {
+    char *path;
+    if (!maTokenize(state, value, "%P", &path)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+
     checkSsl(state);
-    mprSetSslCertFile(state->route->ssl, mprJoinPath(state->host->home, value));
+    mprSetSslCertFile(state->route->ssl, path);
     return 0;
 }
 
 
 static int sslCertificateKeyFileDirective(MaState *state, cchar *key, cchar *value)
 {
+    char *path;
+    if (!maTokenize(state, value, "%P", &path)) {
+        return MPR_ERR_BAD_SYNTAX;
+    }
+
     checkSsl(state);
-    mprSetSslKeyFile(state->route->ssl, mprJoinPath(state->host->home, value));
+    mprSetSslKeyFile(state->route->ssl, path);
     return 0;
 }
 
